@@ -50,11 +50,23 @@
         "description": "Location of the Logic App."
       }
     },
+    "nestedLogicAppName": {
+      "type": "string",
+      "defaultValue": "vc-odt-import-orders"
+    },
     "excelonlinebusiness_1_Connection_Name": {
       "type": "string",
       "defaultValue": "excelonlinebusiness"
     },
     "excelonlinebusiness_1_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": "mko@virtoway.com"
+    },
+    "excelonlinebusiness_2_Connection_Name": {
+      "type": "string",
+      "defaultValue": "excelonlinebusiness-2"
+    },
+    "excelonlinebusiness_2_Connection_DisplayName": {
       "type": "string",
       "defaultValue": "mko@virtoway.com"
     }
@@ -89,7 +101,7 @@
               "inputs": {
                 "host": {
                   "connection": {
-                    "name": "@parameters('$connections')['excelonlinebusiness']['connectionId']"
+                    "name": "@parameters('$connections')['excelonlinebusiness_1']['connectionId']"
                   }
                 },
                 "method": "get",
@@ -109,7 +121,7 @@
               "inputs": {
                 "host": {
                   "connection": {
-                    "name": "@parameters('$connections')['excelonlinebusiness']['connectionId']"
+                    "name": "@parameters('$connections')['excelonlinebusiness_1']['connectionId']"
                   }
                 },
                 "method": "get",
@@ -133,7 +145,7 @@
               "inputs": {
                 "host": {
                   "connection": {
-                    "name": "@parameters('$connections')['excelonlinebusiness']['connectionId']"
+                    "name": "@parameters('$connections')['excelonlinebusiness_1']['connectionId']"
                   }
                 },
                 "method": "get",
@@ -157,7 +169,7 @@
               "inputs": {
                 "host": {
                   "connection": {
-                    "name": "@parameters('$connections')['excelonlinebusiness']['connectionId']"
+                    "name": "@parameters('$connections')['excelonlinebusiness_1']['connectionId']"
                   }
                 },
                 "method": "get",
@@ -181,7 +193,7 @@
               "inputs": {
                 "host": {
                   "connection": {
-                    "name": "@parameters('$connections')['excelonlinebusiness']['connectionId']"
+                    "name": "@parameters('$connections')['excelonlinebusiness_1']['connectionId']"
                   }
                 },
                 "method": "get",
@@ -205,7 +217,7 @@
               "inputs": {
                 "host": {
                   "connection": {
-                    "name": "@parameters('$connections')['excelonlinebusiness']['connectionId']"
+                    "name": "@parameters('$connections')['excelonlinebusiness_1']['connectionId']"
                   }
                 },
                 "method": "get",
@@ -618,7 +630,7 @@
                 "host": {
                   "triggerName": "request",
                   "workflow": {
-                    "id": "/subscriptions/865280ac-6a6b-46b2-a9cd-278d963787db/resourceGroups/vc-odt-import-orders/providers/Microsoft.Logic/workflows/vc-odt-import-orders"
+                    "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedLogicAppName'))]"
                   }
                 },
                 "body": "@{variables('orders')}"
@@ -634,6 +646,10 @@
             "$connections": {
               "defaultValue": {},
               "type": "Object"
+            },
+            "vcOdtImportLogicAppWorkflow": {
+              "type": "string",
+              "defaultValue": "/subscriptions/865280ac-6a6b-46b2-a9cd-278d963787db/resourceGroups/vc-odt-import-orders/providers/Microsoft.Logic/workflows/vc-odt-import-orders"
             }
           },
           "triggers": {
@@ -651,17 +667,20 @@
         "parameters": {
           "$connections": {
             "value": {
-              "excelonlinebusiness": {
+              "excelonlinebusiness_1": {
                 "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'excelonlinebusiness')]",
-                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('excelonlinebusiness_1_Connection_Name'))]",
-                "connectionName": "[parameters('excelonlinebusiness_1_Connection_Name')]"
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('excelonlinebusiness_2_Connection_Name'))]",
+                "connectionName": "[parameters('excelonlinebusiness_2_Connection_Name')]"
               }
             }
+          },
+          "vcOdtImportLogicAppWorkflow": {
+            "value": "[concat('/subscriptions/', subscription().id, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/vc-odt-import-orders')]"
           }
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/connections', parameters('excelonlinebusiness_1_Connection_Name'))]"
+        "[resourceId('Microsoft.Web/connections', parameters('excelonlinebusiness_2_Connection_Name'))]"
       ]
     },
     {
@@ -674,6 +693,18 @@
           "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'excelonlinebusiness')]"
         },
         "displayName": "[parameters('excelonlinebusiness_1_Connection_DisplayName')]"
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2018-07-01-preview",
+      "name": "[parameters('excelonlinebusiness_2_Connection_Name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'excelonlinebusiness')]"
+        },
+        "displayName": "[parameters('excelonlinebusiness_2_Connection_DisplayName')]"
       }
     }
   ],

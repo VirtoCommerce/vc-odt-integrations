@@ -4,6 +4,9 @@
   "parameters": {
     "logicAppName": {
       "value": "vc-odt-read-orders-xlsx"
+    },
+    "nestedLogicAppName": {
+      "value": "vc-odt-import-orders"
     }
   }
 }

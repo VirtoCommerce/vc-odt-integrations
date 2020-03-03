@@ -4,6 +4,9 @@
   "parameters": {
     "logicAppName": {
       "value": "vc-odt-import-orders"
+    },
+    "nestedLogicAppName": {
+      "value": "vc-odt-create-order"
     }
   }
 }
