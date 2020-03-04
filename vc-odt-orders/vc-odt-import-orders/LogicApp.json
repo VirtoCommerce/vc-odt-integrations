@@ -506,7 +506,7 @@
               "type": "Query",
               "inputs": {
                 "from": "@variables('ordersArray')",
-                "where": "@equals(contains(body('Select_exist_order_numbers'), item()?['number']), false)"
+                "where": "@equals(contains(body('Select_exist_order_numbers'), json(concat('{number:\"', item()?['order']?['number'], '\"}'))), false)"
               },
               "runAfter": {
                 "Select_exist_order_numbers": [
