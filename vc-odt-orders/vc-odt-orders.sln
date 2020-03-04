@@ -9,6 +9,8 @@ Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "vc-odt-create-order", "vc-o
 EndProject
 Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "vc-odt-read-orders-xlsx", "vc-odt-read-orders-xlsx\vc-odt-read-orders-xlsx.deployproj", "{F693A8E2-F175-4A76-A578-DBDC5B6046E2}"
 EndProject
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "vc-odt-update-order", "vc-odt-update-order\vc-odt-update-order.deployproj", "{FD9B83A2-435C-4FCB-A757-19E3213BBE40}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{F693A8E2-F175-4A76-A578-DBDC5B6046E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F693A8E2-F175-4A76-A578-DBDC5B6046E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F693A8E2-F175-4A76-A578-DBDC5B6046E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD9B83A2-435C-4FCB-A757-19E3213BBE40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD9B83A2-435C-4FCB-A757-19E3213BBE40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD9B83A2-435C-4FCB-A757-19E3213BBE40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD9B83A2-435C-4FCB-A757-19E3213BBE40}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
