@@ -50,6 +50,15 @@
         "description": "Location of the Logic App."
       }
     },
+    "passwordParam": {
+      "type": "securestring"
+    },
+    "urlParam": {
+      "type": "string"
+    },
+    "usernameParam": {
+      "type": "securestring"
+    },
     "nestedLogicAppName": {
       "type": "string",
       "defaultValue": "vc-odt-create-order"
@@ -169,24 +178,30 @@
                 ]
               }
             },
-            "For_each_order": {
+            "For_each_new_order": {
               "type": "Foreach",
-              "foreach": "@variables('ordersArray')",
+              "foreach": "@body('Filter_new_orders')",
               "actions": {
                 "Set_orderItem": {
                   "type": "SetVariable",
                   "inputs": {
                     "name": "orderItem",
                     "value": {
-                      "customerId": "@{items('For_each_order')?['order']?['customerId']}",
-                      "customerName": "@{items('For_each_order')?['order']?['customerName']}",
-                      "StoreId": "@{variables('storeId')}",
-                      "currency": "@{items('For_each_order')?['order']?['currency']}",
-                      "number": "@{items('For_each_order')?['order']?['number']}",
-                      "status": "@{items('For_each_order')?['order']?['status']}",
-                      "createdDate": "@{items('For_each_order')?['order']?['createdDate']}",
-                      "items": "@variables('productItemsArray')",
-                      "dynamicProperties": "@items('For_each_order')?['order']?['dynamicProperties']"
+                      "connection": {
+                        "endpointUrl": "@parameters('endpointUrl')",
+                        "accessToken": "@body('Parse_token_JSON')?['access_token']"
+                      },
+                      "order": {
+                        "customerId": "@{items('For_each_new_order')?['order']?['customerId']}",
+                        "customerName": "@{items('For_each_new_order')?['order']?['customerName']}",
+                        "StoreId": "@{variables('storeId')}",
+                        "currency": "@{items('For_each_new_order')?['order']?['currency']}",
+                        "number": "@{items('For_each_new_order')?['order']?['number']}",
+                        "status": "@{items('For_each_new_order')?['order']?['status']}",
+                        "createdDate": "@{items('For_each_new_order')?['order']?['createdDate']}",
+                        "items": "@variables('productItemsArray')",
+                        "dynamicProperties": "@items('For_each_new_order')?['order']?['dynamicProperties']"
+                      }
                     }
                   },
                   "runAfter": {
@@ -197,7 +212,7 @@
                 },
                 "For_each_productItem": {
                   "type": "Foreach",
-                  "foreach": "@items('For_each_order')['products']",
+                  "foreach": "@items('For_each_new_order')['products']",
                   "actions": {
                     "Append_to_productItemsArray": {
                       "type": "AppendToArrayVariable",
@@ -240,7 +255,7 @@
                         "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedLogicAppName'))]"
                       }
                     },
-                    "body": "@{variables('orderItem')}"
+                    "body": "@variables('orderItem')"
                   },
                   "runAfter": {
                     "Set_orderItem": [
@@ -250,7 +265,7 @@
                 }
               },
               "runAfter": {
-                "Initialize_productItemsArray": [
+                "Filter_new_orders": [
                   "Succeeded"
                 ]
               },
@@ -284,7 +299,7 @@
                 "body": "Orders successfully imported"
               },
               "runAfter": {
-                "For_each_order": [
+                "For_each_new_order": [
                   "Succeeded"
                 ]
               }
@@ -419,9 +434,174 @@
                 }
               },
               "runAfter": {}
+            },
+            "Initialize_newOrdersArray": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "newOrdersArray",
+                    "type": "array"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_productItemsArray": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "OrderModule_Search": {
+              "type": "Http",
+              "inputs": {
+                "method": "post",
+                "body": {
+                  "numbers": "@variables('inputOrderNumbersArray')"
+                },
+                "headers": {
+                  "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']} ",
+                  "Content-Type": "application/json"
+                },
+                "uri": "@concat(parameters('endpointUrl'),'api/order/customerOrders/search')"
+              },
+              "runAfter": {
+                "Parse_token_JSON": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "apiDefinitionUrl": "@concat(parameters('endpointUrl'),'docs/VirtoCommerce.Orders/swagger.json')",
+                "swaggerSource": "custom"
+              }
+            },
+            "Select_input_order_numbers": {
+              "type": "Select",
+              "inputs": {
+                "from": "@variables('ordersArray')",
+                "select": {
+                  "number": "@item()?['order']?['number']"
+                }
+              },
+              "runAfter": {
+                "For_each_input_order": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Select_exist_order_numbers": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('OrderModule_Search')?['customerOrders']",
+                "select": {
+                  "number": "@item()?['number']"
+                }
+              },
+              "runAfter": {
+                "OrderModule_Search": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Filter_new_orders": {
+              "type": "Query",
+              "inputs": {
+                "from": "@variables('ordersArray')",
+                "where": "@equals(contains(body('Select_exist_order_numbers'), item()?['number']), false)"
+              },
+              "runAfter": {
+                "Select_exist_order_numbers": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "HTTP_get_token": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "@{concat(parameters('endpointUrl'),'connect/token')}",
+                "headers": {
+                  "Content-Type": "application/x-www-form-urlencoded"
+                },
+                "body": "@concat('grant_type=password&password=',encodeUriComponent(parameters('endpointPassword')),'&username=',encodeUriComponent(parameters('endpointUsername')))"
+              },
+              "runAfter": {
+                "Select_input_order_numbers": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Parse_token_JSON": {
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('HTTP_get_token')",
+                "schema": {
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "expires_in": {
+                      "type": "integer"
+                    },
+                    "token_type": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "runAfter": {
+                "HTTP_get_token": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "For_each_input_order": {
+              "type": "Foreach",
+              "foreach": "@variables('ordersArray')",
+              "actions": {
+                "Append_to_array_variable": {
+                  "type": "AppendToArrayVariable",
+                  "inputs": {
+                    "name": "inputOrderNumbersArray",
+                    "value": "@items('For_each_input_order')?['order']['number']"
+                  },
+                  "runAfter": {}
+                }
+              },
+              "runAfter": {
+                "Initialize_variable": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "inputOrderNumbersArray",
+                    "type": "array"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_newOrdersArray": [
+                  "Succeeded"
+                ]
+              }
             }
           },
-          "parameters": {},
+          "parameters": {
+            "endpointPassword": {
+              "type": "securestring"
+            },
+            "endpointUrl": {
+              "type": "string"
+            },
+            "endpointUsername": {
+              "type": "securestring"
+            }
+          },
           "triggers": {
             "request": {
               "type": "Request",
@@ -558,7 +738,17 @@
           "contentVersion": "1.0.0.0",
           "outputs": {}
         },
-        "parameters": {}
+        "parameters": {
+          "endpointPassword": {
+            "value": "[parameters('passwordParam')]"
+          },
+          "endpointUsername": {
+            "value": "[parameters('usernameParam')]"
+          },
+          "endpointUrl": {
+            "value": "[parameters('urlParam')]"
+          }
+        }
       }
     }
   ],

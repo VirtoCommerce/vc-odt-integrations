@@ -5,6 +5,15 @@
     "logicAppName": {
       "value": "vc-odt-import-orders"
     },
+    "passwordParam": {
+      "value": "aA111111"
+    },
+    "urlParam": {
+      "value": "https://dev-odt-admin.azurewebsites.net/"
+    },
+    "usernameParam": {
+      "value": "integration"
+    },
     "nestedLogicAppName": {
       "value": "vc-odt-create-order"
     }

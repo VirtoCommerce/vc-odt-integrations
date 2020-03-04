@@ -4,15 +4,6 @@
   "parameters": {
     "logicAppName": {
       "value": "vc-odt-create-order"
-    },
-    "passwordParam": {
-      "value": "aA111111"
-    },
-    "urlParam": {
-      "value": "https://dev-odt-admin.azurewebsites.net/"
-    },
-    "usernameParam": {
-      "value": "integration"
     }
   }
 }

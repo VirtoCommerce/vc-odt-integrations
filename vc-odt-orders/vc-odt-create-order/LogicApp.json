@@ -10,15 +10,6 @@
         "description": "Name of the Logic App."
       }
     },
-    "passwordParam": {
-      "type": "securestring"
-    },
-    "urlParam": {
-      "type": "string"
-    },
-    "usernameParam": {
-      "type": "securestring"
-    },
     "logicAppLocation": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -91,70 +82,17 @@
               "type": "Http",
               "inputs": {
                 "method": "post",
-                "uri": "@{concat(parameters('endpointUrl'),'api/order/customerOrders')}",
+                "uri": "@{concat(triggerBody()?['connection']?['endpointUrl'],'api/order/customerOrders')}",
                 "headers": {
-                  "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']} ",
+                  "Authorization": "Bearer @{triggerBody()?['connection']?['accessToken']}",
                   "Content-Type": "application/json"
                 },
-                "body": "@triggerBody()"
-              },
-              "runAfter": {
-                "Parse_token_JSON": [
-                  "Succeeded"
-                ]
-              }
-            },
-            "HTTP_get_token": {
-              "type": "Http",
-              "inputs": {
-                "method": "POST",
-                "uri": "@{concat(parameters('endpointUrl'),'connect/token')}",
-                "headers": {
-                  "Content-Type": "application/x-www-form-urlencoded"
-                },
-                "body": "@{concat('grant_type=password&password=',encodeUriComponent(parameters('endpointPassword')),'&username=',encodeUriComponent(parameters('endpointUsername')))}"
+                "body": "@triggerBody()?['order']"
               },
               "runAfter": {}
-            },
-            "Parse_token_JSON": {
-              "type": "ParseJson",
-              "inputs": {
-                "content": "@body('HTTP_get_token')",
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "token_type": {
-                      "type": "string"
-                    },
-                    "access_token": {
-                      "type": "string"
-                    },
-                    "expires_in": {
-                      "type": "integer"
-                    }
-                  }
-                }
-              },
-              "runAfter": {
-                "HTTP_get_token": [
-                  "Succeeded"
-                ]
-              }
             }
           },
-          "parameters": {
-            "endpointPassword": {
-              "defaultValue": "aA111111",
-              "type": "securestring"
-            },
-            "endpointUrl": {
-              "defaultValue": "https://dev-odt-admin.azurewebsites.net/",
-              "type": "string"
-            },
-            "endpointUsername": {
-              "defaultValue": "integration",
-              "type": "securestring"
-            }
+          "parameters": {            
           },
           "triggers": {
             "request": {
@@ -164,123 +102,139 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "StoreId": {
-                      "type": "string"
-                    },
-                    "createdDate": {
-                      "type": "string"
-                    },
-                    "currency": {
-                      "type": "string"
-                    },
-                    "customerId": {
-                      "type": "string"
-                    },
-                    "customerName": {
-                      "type": "string"
-                    },
-                    "dynamicProperties": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "values": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "value": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "value"
-                              ]
-                            }
-                          }
+                    "connection": {
+                      "type": "object",
+                      "properties": {
+                        "endpointUrl": {
+                          "type": "string"
                         },
-                        "required": [
-                          "name",
-                          "values"
-                        ]
+                        "accessToken": {
+                          "type": "string"
+                        }
                       }
                     },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "CatalogId": {
-                            "type": "string"
-                          },
-                          "ProductId": {
-                            "type": "string"
-                          },
-                          "currency": {
-                            "type": "string"
-                          },
-                          "dynamicProperties": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "name": {
-                                  "type": "string"
-                                },
-                                "values": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "value": {
-                                        "type": "string"
-                                      }
+                    "order": {
+                      "type": "object",
+                      "properties": {
+                        "customerId": {
+                          "type": "string"
+                        },
+                        "customerName": {
+                          "type": "string"
+                        },
+                        "StoreId": {
+                          "type": "string"
+                        },
+                        "currency": {
+                          "type": "string"
+                        },
+                        "number": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "createdDate": {
+                          "type": "string"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "price": {
+                                "type": "number"
+                              },
+                              "quantity": {
+                                "type": "integer"
+                              },
+                              "sku": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "currency": {
+                                "type": "string"
+                              },
+                              "ProductId": {
+                                "type": "string"
+                              },
+                              "CatalogId": {
+                                "type": "string"
+                              },
+                              "dynamicProperties": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "string"
                                     },
-                                    "required": [
-                                      "value"
-                                    ]
-                                  }
+                                    "values": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "value": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "value"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "name",
+                                    "values"
+                                  ]
                                 }
-                              },
-                              "required": [
-                                "name",
-                                "values"
-                              ]
-                            }
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "price": {
-                            "type": "number"
-                          },
-                          "quantity": {
-                            "type": "integer"
-                          },
-                          "sku": {
-                            "type": "string"
+                              }
+                            },
+                            "required": [
+                              "price",
+                              "quantity",
+                              "sku",
+                              "name",
+                              "currency",
+                              "ProductId",
+                              "CatalogId",
+                              "dynamicProperties"
+                            ]
                           }
                         },
-                        "required": [
-                          "CatalogId",
-                          "ProductId",
-                          "currency",
-                          "dynamicProperties",
-                          "name",
-                          "price",
-                          "quantity",
-                          "sku"
-                        ]
+                        "dynamicProperties": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "values": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "value"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "values"
+                            ]
+                          }
+                        }
                       }
-                    },
-                    "number": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string"
                     }
                   }
                 },
@@ -292,15 +246,7 @@
           "outputs": {}
         },
         "parameters": {
-          "endpointPassword": {
-            "value": "[parameters('passwordParam')]"
-          },
-          "endpointUsername": {
-            "value": "[parameters('usernameParam')]"
-          },
-          "endpointUrl": {
-            "value": "[parameters('urlParam')]"
-          }
+          
         }
       }
     }
