@@ -299,6 +299,9 @@
                 "body": "Orders successfully imported"
               },
               "runAfter": {
+                "For_each_changed_order": [
+                  "Succeeded"
+                ],
                 "For_each_new_order": [
                   "Succeeded"
                 ]
@@ -435,13 +438,13 @@
               },
               "runAfter": {}
             },
-            "Initialize_newOrdersArray": {
+            "Initialize_updateOrderItem": {
               "type": "InitializeVariable",
               "inputs": {
                 "variables": [
                   {
-                    "name": "newOrdersArray",
-                    "type": "array"
+                    "name": "updateOrderItem",
+                    "type": "object"
                   }
                 ]
               },
@@ -509,7 +512,7 @@
                 "where": "@equals(contains(body('Select_exist_order_numbers'), json(concat('{number:\"', item()?['order']?['number'], '\"}'))), false)"
               },
               "runAfter": {
-                "Select_exist_order_numbers": [
+                "Select_exist_order_numbers_and_statuses": [
                   "Succeeded"
                 ]
               }
@@ -569,12 +572,12 @@
                 }
               },
               "runAfter": {
-                "Initialize_variable": [
+                "Initialize_inputOrderNumbersArray": [
                   "Succeeded"
                 ]
               }
             },
-            "Initialize_variable": {
+            "Initialize_inputOrderNumbersArray": {
               "type": "InitializeVariable",
               "inputs": {
                 "variables": [
@@ -585,9 +588,101 @@
                 ]
               },
               "runAfter": {
-                "Initialize_newOrdersArray": [
+                "Initialize_updateOrderItem": [
                   "Succeeded"
                 ]
+              }
+            },
+            "Select_exist_order_numbers_and_statuses": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('OrderModule_Search')?['customerOrders']",
+                "select": {
+                  "number": "@item()?['number']",
+                  "status": "@item()?['status']"
+                }
+              },
+              "runAfter": {
+                "Select_exist_order_numbers": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Filter_new_and_changed_orders": {
+              "type": "Query",
+              "inputs": {
+                "from": "@variables('ordersArray')",
+                "where": "@equals(contains(body('Select_exist_order_numbers_and_statuses'), json(concat('{number:\"', item()?['order']?['number'], '\", status:\"', item()?['order']?['status'], '\"}'))), false)"
+              },
+              "runAfter": {
+                "Select_exist_order_numbers_and_statuses": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Filter_changed_orders": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Filter_new_and_changed_orders')",
+                "where": "@equals(contains(body('Select_exist_order_numbers'), json(concat('{number:\"', item()?['order']?['number'], '\"}'))), true)"
+              },
+              "runAfter": {
+                "Filter_new_and_changed_orders": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "For_each_changed_order": {
+              "type": "Foreach",
+              "foreach": "@body('Filter_changed_orders')",
+              "actions": {
+                "Set_updateOrderItem": {
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "updateOrderItem",
+                    "value": {
+                      "connection": {
+                        "endpointUrl": "@parameters('endpointUrl')",
+                        "accessToken": "@body('Parse_token_JSON')?['access_token']"
+                      },
+                      "order": {
+                        "customerId": "@{items('For_each_changed_order')?['order']?['customerId']}",
+                        "StoreId": "@{variables('storeId')}",
+                        "currency": "@items('For_each_changed_order')?['order']?['currency']",
+                        "number": "@{items('For_each_changed_order')?['order']?['number']}",
+                        "status": "@{items('For_each_changed_order')?['order']?['status']}"
+                      }
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "vc-odt-update-order": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "triggerName": "request",
+                      "workflow": {
+                        "id": "/subscriptions/865280ac-6a6b-46b2-a9cd-278d963787db/resourceGroups/vc-odt-import-orders/providers/Microsoft.Logic/workflows/vc-odt-update-order"
+                      }
+                    },
+                    "body": "@variables('updateOrderItem')"
+                  },
+                  "runAfter": {
+                    "Set_updateOrderItem": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Filter_changed_orders": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "concurrency": {
+                  "repetitions": 1
+                }
               }
             }
           },
