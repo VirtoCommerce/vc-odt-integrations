@@ -88,7 +88,8 @@
             "Response": {
               "type": "Response",
               "inputs": {
-                "statusCode": 200
+                "statusCode": 200,
+                "body": "@body('vc-odt-import-orders')"
               },
               "runAfter": {
                 "vc-odt-import-orders": [
@@ -657,7 +658,8 @@
               "type": "Request",
               "kind": "Http",
               "inputs": {
-                "schema": {}
+                "schema": {},
+                "method": "GET"
               }
             }
           },
