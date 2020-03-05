@@ -14,8 +14,17 @@
     "usernameParam": {
       "value": "integration"
     },
-    "nestedLogicAppName": {
+    "nestedCreateLogicAppName": {
       "value": "vc-odt-create-order"
+    },
+    "nestedUpdateLogicAppName": {
+      "value": "vc-odt-create-order"
+    },
+    "storeIdParam": {
+      "value": "Electronics"
+    },
+    "catalogIdParam": {
+      "value": "Electronics"
     }
   }
 }

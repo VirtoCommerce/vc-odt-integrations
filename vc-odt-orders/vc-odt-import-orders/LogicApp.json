@@ -50,6 +50,12 @@
         "description": "Location of the Logic App."
       }
     },
+    "storeIdParam": {
+      "type": "securestring"
+    },
+    "catalogIdParam": {
+      "type": "string"
+    },
     "passwordParam": {
       "type": "securestring"
     },
@@ -59,9 +65,13 @@
     "usernameParam": {
       "type": "securestring"
     },
-    "nestedLogicAppName": {
+    "nestedCreateLogicAppName": {
       "type": "string",
       "defaultValue": "vc-odt-create-order"
+    },
+    "nestedUpdateLogicAppName": {
+      "type": "string",
+      "defaultValue": "vc-odt-update-order"
     }
   },
   "variables": {},
@@ -95,121 +105,10 @@
                 ]
               }
             },
-            "Initialize_storeId": {
-              "type": "InitializeVariable",
-              "inputs": {
-                "variables": [
-                  {
-                    "name": "storeId",
-                    "type": "string",
-                    "value": "Electronics"
-                  }
-                ]
-              },
-              "runAfter": {
-                "Initialize_ordersArray": [
-                  "Succeeded"
-                ]
-              }
-            },
-            "Initialize_catalogId": {
-              "type": "InitializeVariable",
-              "inputs": {
-                "variables": [
-                  {
-                    "name": "catalogId",
-                    "type": "string",
-                    "value": "catalogId"
-                  }
-                ]
-              },
-              "runAfter": {
-                "Initialize_storeId": [
-                  "Succeeded"
-                ]
-              }
-            },
-            "Initialize_orderItem": {
-              "type": "InitializeVariable",
-              "inputs": {
-                "variables": [
-                  {
-                    "name": "orderItem",
-                    "type": "object",
-                    "value": {
-                      "customerId": "00000000000000000000000000000000",
-                      "customerName": "",
-                      "StoreId": "@{variables('storeId')}",
-                      "currency": "USD",
-                      "items": [
-                        {
-                          "price": 20.3,
-                          "quantity": 10,
-                          "sku": "MIUI",
-                          "productType": "",
-                          "name": "",
-                          "currency": "USD",
-                          "ProductId": "00000000000000000000000000000000",
-                          "CatalogId": "@{variables('catalogId')}"
-                        }
-                      ],
-                      "number": "",
-                      "isApproved": true,
-                      "status": "",
-                      "isCancelled": false,
-                      "createdDate": "",
-                      "dynamicProperties": [
-                        {
-                          "name": "orderDp",
-                          "values": [
-                            {
-                              "value": "orderDpValue"
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              "runAfter": {
-                "Initialize_catalogId": [
-                  "Succeeded"
-                ]
-              }
-            },
             "For_each_new_order": {
               "type": "Foreach",
               "foreach": "@body('Filter_new_orders')",
               "actions": {
-                "Set_orderItem": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "orderItem",
-                    "value": {
-                      "connection": {
-                        "endpointUrl": "@parameters('endpointUrl')",
-                        "accessToken": "@body('Parse_token_JSON')?['access_token']"
-                      },
-                      "order": {
-                        "customerId": "@{items('For_each_new_order')?['order']?['customerId']}",
-                        "customerName": "@{items('For_each_new_order')?['order']?['customerName']}",
-                        "StoreId": "@{variables('storeId')}",
-                        "currency": "@{items('For_each_new_order')?['order']?['currency']}",
-                        "number": "@{items('For_each_new_order')?['order']?['number']}",
-                        "status": "@{items('For_each_new_order')?['order']?['status']}",
-                        "createdDate": "@{items('For_each_new_order')?['order']?['createdDate']}",
-                        "items": "@variables('productItemsArray')",
-                        "dynamicProperties": "@items('For_each_new_order')?['order']?['dynamicProperties']"
-                      }
-                    }
-                  },
-                  "runAfter": {
-                    "For_each_productItem": [
-                      "Succeeded"
-                    ]
-                  }
-                },
                 "For_each_productItem": {
                   "type": "Foreach",
                   "foreach": "@items('For_each_new_order')['products']",
@@ -225,7 +124,7 @@
                           "name": "@items('For_each_productItem')?['name']",
                           "currency": "@items('For_each_productItem')?['currency']",
                           "ProductId": "00000000000000000000000000000000",
-                          "CatalogId": "@{variables('catalogId')}",
+                          "CatalogId": "@{parameters('catalogId')}",
                           "dynamicProperties": "@items('For_each_productItem')?['dynamicProperties']"
                         }
                       },
@@ -252,13 +151,38 @@
                     "host": {
                       "triggerName": "request",
                       "workflow": {
-                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedLogicAppName'))]"
+                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedCreateLogicAppName'))]"
                       }
                     },
-                    "body": "@variables('orderItem')"
+                    "body": "@outputs('Compose_new_order')"
                   },
                   "runAfter": {
-                    "Set_orderItem": [
+                    "Compose_new_order": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Compose_new_order": {
+                  "type": "Compose",
+                  "inputs": {
+                    "connection": {
+                      "endpointUrl": "@parameters('endpointUrl')",
+                      "accessToken": "@body('Parse_token_JSON')?['access_token']"
+                    },
+                    "order": {
+                      "customerId": "@{items('For_each_new_order')?['order']?['customerId']}",
+                      "customerName": "@{items('For_each_new_order')?['order']?['customerName']}",
+                      "StoreId": "@{parameters('storeId')}",
+                      "currency": "@{items('For_each_new_order')?['order']?['currency']}",
+                      "number": "@{items('For_each_new_order')?['order']?['number']}",
+                      "status": "@{items('For_each_new_order')?['order']?['status']}",
+                      "createdDate": "@{items('For_each_new_order')?['order']?['createdDate']}",
+                      "items": "@variables('productItemsArray')",
+                      "dynamicProperties": "@items('For_each_new_order')?['order']?['dynamicProperties']"
+                    }
+                  },
+                  "runAfter": {
+                    "For_each_productItem": [
                       "Succeeded"
                     ]
                   }
@@ -286,7 +210,7 @@
                 ]
               },
               "runAfter": {
-                "Initialize_orderItem": [
+                "Initialize_ordersArray": [
                   "Succeeded"
                 ]
               }
@@ -438,22 +362,6 @@
               },
               "runAfter": {}
             },
-            "Initialize_updateOrderItem": {
-              "type": "InitializeVariable",
-              "inputs": {
-                "variables": [
-                  {
-                    "name": "updateOrderItem",
-                    "type": "object"
-                  }
-                ]
-              },
-              "runAfter": {
-                "Initialize_productItemsArray": [
-                  "Succeeded"
-                ]
-              }
-            },
             "OrderModule_Search": {
               "type": "Http",
               "inputs": {
@@ -462,7 +370,7 @@
                   "numbers": "@variables('inputOrderNumbersArray')"
                 },
                 "headers": {
-                  "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']} ",
+                  "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']}",
                   "Content-Type": "application/json"
                 },
                 "uri": "@concat(parameters('endpointUrl'),'api/order/customerOrders/search')"
@@ -588,7 +496,7 @@
                 ]
               },
               "runAfter": {
-                "Initialize_updateOrderItem": [
+                "Initialize_productItemsArray": [
                   "Succeeded"
                 ]
               }
@@ -636,39 +544,50 @@
               "type": "Foreach",
               "foreach": "@body('Filter_changed_orders')",
               "actions": {
-                "Set_updateOrderItem": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "updateOrderItem",
-                    "value": {
-                      "connection": {
-                        "endpointUrl": "@parameters('endpointUrl')",
-                        "accessToken": "@body('Parse_token_JSON')?['access_token']"
-                      },
-                      "order": {
-                        "customerId": "@{items('For_each_changed_order')?['order']?['customerId']}",
-                        "StoreId": "@{variables('storeId')}",
-                        "currency": "@items('For_each_changed_order')?['order']?['currency']",
-                        "number": "@{items('For_each_changed_order')?['order']?['number']}",
-                        "status": "@{items('For_each_changed_order')?['order']?['status']}"
-                      }
-                    }
-                  },
-                  "runAfter": {}
-                },
                 "vc-odt-update-order": {
                   "type": "Workflow",
                   "inputs": {
                     "host": {
                       "triggerName": "request",
                       "workflow": {
-                        "id": "/subscriptions/865280ac-6a6b-46b2-a9cd-278d963787db/resourceGroups/vc-odt-import-orders/providers/Microsoft.Logic/workflows/vc-odt-update-order"
+                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedUpdateLogicAppName'))]"
                       }
                     },
-                    "body": "@variables('updateOrderItem')"
+                    "body": "@outputs('Compose_updated_order')"
                   },
                   "runAfter": {
-                    "Set_updateOrderItem": [
+                    "Compose_updated_order": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "OrderModule_GetByNumber": {
+                  "type": "Http",
+                  "inputs": {
+                    "method": "get",
+                    "headers": {
+                      "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']}",
+                      "Content-Type": "application/json"
+                    },
+                    "uri": "@concat(parameters('endpointUrl'),'api/order/customerOrders//number/',encodeURIComponent(items('For_each_changed_order')?['order']?['number']))"
+                  },
+                  "runAfter": {},
+                  "metadata": {
+                    "apiDefinitionUrl": "@concat(parameters('endpointUrl'),'docs/VirtoCommerce.Orders/swagger.json')",
+                    "swaggerSource": "custom"
+                  }
+                },
+                "Compose_updated_order": {
+                  "type": "Compose",
+                  "inputs": {
+                    "connection": {
+                      "endpointUrl": "@parameters('endpointUrl')",
+                      "accessToken": "@body('Parse_token_JSON')?['access_token']"
+                    },
+                    "order": "@setProperty(body('OrderModule_GetByNumber'),'status','new')"
+                  },
+                  "runAfter": {
+                    "OrderModule_GetByNumber": [
                       "Succeeded"
                     ]
                   }
@@ -687,6 +606,14 @@
             }
           },
           "parameters": {
+            "storeId": {
+              "defaultValue": "Electronics",
+              "type": "string"
+            },
+            "catalogId": {
+              "defaultValue": "Electronics",
+              "type": "string"
+            },
             "endpointPassword": {
               "type": "securestring"
             },
@@ -834,6 +761,12 @@
           "outputs": {}
         },
         "parameters": {
+          "storeId": {
+            "value": "[parameters('storeIdParam')]"
+          },
+          "catalogId": {
+            "value": "[parameters('catalogIdParam')]"
+          },
           "endpointPassword": {
             "value": "[parameters('passwordParam')]"
           },
