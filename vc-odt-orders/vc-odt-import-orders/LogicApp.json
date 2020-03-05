@@ -449,7 +449,7 @@
                       "endpointUrl": "@parameters('endpointUrl')",
                       "accessToken": "@body('Parse_token_JSON')?['access_token']"
                     },
-                    "order": "@setProperty(body('OrderModule_GetByNumber'),'status','new')"
+                    "order": "@setProperty(body('OrderModule_GetByNumber'),'status',items('For_each_changed_order')?['order']?['status'])"
                   },
                   "runAfter": {
                     "OrderModule_GetByNumber": [
