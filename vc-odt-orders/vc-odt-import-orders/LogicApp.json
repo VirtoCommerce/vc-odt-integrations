@@ -95,15 +95,11 @@
                   {
                     "name": "ordersArray",
                     "type": "array",
-                    "value": "@body('Parse_JSON')"
+                    "value": "@json(triggerBody())"
                   }
                 ]
               },
-              "runAfter": {
-                "Parse_JSON": [
-                  "Succeeded"
-                ]
-              }
+              "runAfter": {}
             },
             "For_each_new_order": {
               "type": "Foreach",
@@ -230,137 +226,6 @@
                   "Succeeded"
                 ]
               }
-            },
-            "Parse_JSON": {
-              "type": "ParseJson",
-              "inputs": {
-                "content": "@triggerBody()",
-                "schema": {
-                  "items": {
-                    "properties": {
-                      "order": {
-                        "properties": {
-                          "createdDate": {
-                            "type": "string"
-                          },
-                          "currency": {
-                            "type": "string"
-                          },
-                          "customerId": {
-                            "type": "string"
-                          },
-                          "customerName": {
-                            "type": "string"
-                          },
-                          "dynamicProperties": {
-                            "items": {
-                              "properties": {
-                                "name": {
-                                  "type": "string"
-                                },
-                                "values": {
-                                  "items": {
-                                    "properties": {
-                                      "value": {
-                                        "type": "string"
-                                      }
-                                    },
-                                    "required": [
-                                      "value"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "required": [
-                                "name",
-                                "values"
-                              ],
-                              "type": "object"
-                            },
-                            "type": "array"
-                          },
-                          "number": {
-                            "type": "string"
-                          },
-                          "status": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "products": {
-                        "items": {
-                          "properties": {
-                            "currency": {
-                              "type": "string"
-                            },
-                            "dynamicProperties": {
-                              "items": {
-                                "properties": {
-                                  "name": {
-                                    "type": "string"
-                                  },
-                                  "values": {
-                                    "items": {
-                                      "properties": {
-                                        "value": {
-                                          "type": "string"
-                                        }
-                                      },
-                                      "required": [
-                                        "value"
-                                      ],
-                                      "type": "object"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "required": [
-                                  "name",
-                                  "values"
-                                ],
-                                "type": "object"
-                              },
-                              "type": "array"
-                            },
-                            "name": {
-                              "type": "string"
-                            },
-                            "price": {
-                              "type": "number"
-                            },
-                            "quantity": {
-                              "type": "integer"
-                            },
-                            "sku": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "currency",
-                            "dynamicProperties",
-                            "name",
-                            "price",
-                            "quantity",
-                            "sku"
-                          ],
-                          "type": "object"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "order",
-                      "products"
-                    ],
-                    "type": "object"
-                  },
-                  "type": "array"
-                }
-              },
-              "runAfter": {}
             },
             "OrderModule_Search": {
               "type": "Http",
@@ -637,22 +502,16 @@
                       "order": {
                         "type": "object",
                         "properties": {
-                          "customerId": {
-                            "type": "string"
-                          },
-                          "customerName": {
+                          "createdDate": {
                             "type": "string"
                           },
                           "currency": {
                             "type": "string"
                           },
-                          "number": {
+                          "customerId": {
                             "type": "string"
                           },
-                          "status": {
-                            "type": "string"
-                          },
-                          "createdDate": {
+                          "customerName": {
                             "type": "string"
                           },
                           "dynamicProperties": {
@@ -663,6 +522,9 @@
                                 "name": {
                                   "type": "string"
                                 },
+                                "valueType": {
+                                  "type": "string"
+                                },
                                 "values": {
                                   "type": "array",
                                   "items": {
@@ -670,19 +532,34 @@
                                     "properties": {
                                       "value": {
                                         "type": "string"
+                                      },
+                                      "valueType": {
+                                        "type": "string"
+                                      },
+                                      "propertyName": {
+                                        "type": "string"
                                       }
                                     },
                                     "required": [
-                                      "value"
+                                      "value",
+                                      "valueType",
+                                      "propertyName"
                                     ]
                                   }
                                 }
                               },
                               "required": [
                                 "name",
+                                "valueType",
                                 "values"
                               ]
                             }
+                          },
+                          "number": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
                           }
                         }
                       },
@@ -691,18 +568,6 @@
                         "items": {
                           "type": "object",
                           "properties": {
-                            "price": {
-                              "type": "number"
-                            },
-                            "quantity": {
-                              "type": "integer"
-                            },
-                            "sku": {
-                              "type": "string"
-                            },
-                            "name": {
-                              "type": "string"
-                            },
                             "currency": {
                               "type": "string"
                             },
@@ -714,6 +579,9 @@
                                   "name": {
                                     "type": "string"
                                   },
+                                  "valueType": {
+                                    "type": "string"
+                                  },
                                   "values": {
                                     "type": "array",
                                     "items": {
@@ -721,28 +589,49 @@
                                       "properties": {
                                         "value": {
                                           "type": "string"
+                                        },
+                                        "valueType": {
+                                          "type": "string"
+                                        },
+                                        "propertyName": {
+                                          "type": "string"
                                         }
                                       },
                                       "required": [
-                                        "value"
+                                        "value",
+                                        "valueType",
+                                        "propertyName"
                                       ]
                                     }
                                   }
                                 },
                                 "required": [
                                   "name",
+                                  "valueType",
                                   "values"
                                 ]
                               }
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "price": {
+                              "type": "number"
+                            },
+                            "quantity": {
+                              "type": "integer"
+                            },
+                            "sku": {
+                              "type": "string"
                             }
                           },
                           "required": [
+                            "currency",
+                            "dynamicProperties",
+                            "name",
                             "price",
                             "quantity",
-                            "sku",
-                            "name",
-                            "currency",
-                            "dynamicProperties"
+                            "sku"
                           ]
                         }
                       }

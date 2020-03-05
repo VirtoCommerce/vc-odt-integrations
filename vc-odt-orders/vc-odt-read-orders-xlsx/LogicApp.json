@@ -414,7 +414,9 @@
                               "inputs": {
                                 "name": "itemPropertyValues",
                                 "value": {
-                                  "value": "@{items('For_each_itemPropertyValue')?['products/dynamicProperties/value']}"
+                                  "value": "@{items('For_each_itemPropertyValue')?['products/dynamicProperties/value']}",
+                                  "valueType": "ShortText",
+                                  "propertyName": "@{items('For_each_itemProperty')?['products/dynamicProperties/name']}"
                                 }
                               },
                               "runAfter": {}
@@ -437,6 +439,7 @@
                             "name": "ItemProperties",
                             "value": {
                               "name": "@{items('For_each_itemProperty')?['products/dynamicProperties/name']}",
+                              "valueType": "ShortText",
                               "values": "@variables('itemPropertyValues')"
                             }
                           },
@@ -546,7 +549,9 @@
                           "inputs": {
                             "name": "orderPropertyValues",
                             "value": {
-                              "value": "@{items('For_each_orderPropertyValue')?['order/dynamicProperties/value']}"
+                              "value": "@{items('For_each_orderPropertyValue')?['order/dynamicProperties/value']}",
+                              "valueType": "ShortText",
+                              "propertyName": "@{items('For_each_orderProperty')?['order/dynamicProperties/name']}"
                             }
                           },
                           "runAfter": {}
@@ -569,6 +574,7 @@
                         "name": "orderProperties",
                         "value": {
                           "name": "@{items('For_each_orderProperty')?['order/dynamicProperties/name']}",
+                          "valueType": "ShortText",
                           "values": "@variables('orderPropertyValues')"
                         }
                       },
