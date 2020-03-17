@@ -1,0 +1,720 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "metadata": {
+        "description": "Name of the Logic App."
+      }
+    },
+    "logicAppLocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "allowedValues": [
+        "[resourceGroup().location]",
+        "eastasia",
+        "southeastasia",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "westeurope",
+        "japanwest",
+        "japaneast",
+        "brazilsouth",
+        "australiaeast",
+        "australiasoutheast",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "canadacentral",
+        "canadaeast",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westus2",
+        "koreacentral",
+        "koreasouth",
+        "francecentral",
+        "francesouth",
+        "southafricanorth",
+        "southafricawest"
+      ],
+      "metadata": {
+        "description": "Location of the Logic App."
+      }
+    },
+    "nestedLogicAppName": {
+      "type": "string",
+      "defaultValue": "vc-odt-import-orders"
+    },
+    "excelonlinebusiness_1_Connection_Name": {
+      "type": "string",
+      "defaultValue": "excelonlinebusiness"
+    },
+    "excelonlinebusiness_1_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": "mko@virtoway.com"
+    },
+    "excelonlinebusiness_2_Connection_Name": {
+      "type": "string",
+      "defaultValue": "excelonlinebusiness-2"
+    },
+    "excelonlinebusiness_2_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": "mko@virtoway.com"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "name": "[parameters('logicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('logicAppLocation')]",
+      "tags": {
+        "displayName": "LogicApp"
+      },
+      "apiVersion": "2016-06-01",
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Response": {
+              "type": "Response",
+              "inputs": {
+                "statusCode": 200,
+                "body": "@body('vc-odt-import-orders')"
+              },
+              "runAfter": {
+                "vc-odt-import-orders": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "List_rows_present_in_a_Orders_table": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['excelonlinebusiness_1']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent('01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH')}/tables/@{encodeURIComponent('{C2622C04-AFC2-48DD-922C-9D49A387D1E8}')}/items",
+                "queries": {
+                  "source": "groups/64134d35-983b-43d1-b492-88a7b8523513"
+                }
+              },
+              "runAfter": {},
+              "metadata": {
+                "01BJSXD57X7SA2IASNEBELQACJTBONGP7P": "/Training/ODT/odtorders.xlsx",
+                "01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH": "/Sales/ODT/odtorders.xlsx"
+              }
+            },
+            "List_rows_present_in_a_OrderItems_table": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['excelonlinebusiness_1']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent('01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH')}/tables/@{encodeURIComponent('{9C8E0545-8883-40BC-8734-3A0E5B15BAFD}')}/items",
+                "queries": {
+                  "source": "groups/64134d35-983b-43d1-b492-88a7b8523513"
+                }
+              },
+              "runAfter": {
+                "List_rows_present_in_a_Orders_table": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "01BJSXD57X7SA2IASNEBELQACJTBONGP7P": "/Training/ODT/odtorders.xlsx",
+                "01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH": "/Sales/ODT/odtorders.xlsx"
+              }
+            },
+            "List_rows_present_in_a_ItemProperties_table": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['excelonlinebusiness_1']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent('01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH')}/tables/@{encodeURIComponent('{D12BE5DA-0B04-4187-A172-60E4E26F7BD3}')}/items",
+                "queries": {
+                  "source": "groups/64134d35-983b-43d1-b492-88a7b8523513"
+                }
+              },
+              "runAfter": {
+                "List_rows_present_in_a_OrderItems_table": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "01BJSXD57X7SA2IASNEBELQACJTBONGP7P": "/Training/ODT/odtorders.xlsx",
+                "01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH": "/Sales/ODT/odtorders.xlsx"
+              }
+            },
+            "List_rows_present_in_a_ItemPropertyValues_table": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['excelonlinebusiness_1']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent('01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH')}/tables/@{encodeURIComponent('{38DFCE9D-0658-4377-9FB7-90326160E578}')}/items",
+                "queries": {
+                  "source": "groups/64134d35-983b-43d1-b492-88a7b8523513"
+                }
+              },
+              "runAfter": {
+                "List_rows_present_in_a_ItemProperties_table": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "01BJSXD57X7SA2IASNEBELQACJTBONGP7P": "/Training/ODT/odtorders.xlsx",
+                "01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH": "/Sales/ODT/odtorders.xlsx"
+              }
+            },
+            "List_rows_present_in_a_OrderProperties_table": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['excelonlinebusiness_1']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent('01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH')}/tables/@{encodeURIComponent('{9A8EA656-731C-4A41-A5FA-16ED13E21585}')}/items",
+                "queries": {
+                  "source": "groups/64134d35-983b-43d1-b492-88a7b8523513"
+                }
+              },
+              "runAfter": {
+                "List_rows_present_in_a_ItemPropertyValues_table": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "01BJSXD57X7SA2IASNEBELQACJTBONGP7P": "/Training/ODT/odtorders.xlsx",
+                "01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH": "/Sales/ODT/odtorders.xlsx"
+              }
+            },
+            "List_rows_present_in_a_OrderPropertyValues_table": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['excelonlinebusiness_1']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent('01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH')}/tables/@{encodeURIComponent('{5125C541-1AD9-4934-A681-C14DB3B6667F}')}/items",
+                "queries": {
+                  "source": "groups/64134d35-983b-43d1-b492-88a7b8523513"
+                }
+              },
+              "runAfter": {
+                "List_rows_present_in_a_OrderProperties_table": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "01BJSXD57X7SA2IASNEBELQACJTBONGP7P": "/Training/ODT/odtorders.xlsx",
+                "01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH": "/Sales/ODT/odtorders.xlsx"
+              }
+            },
+            "Initialize_orders_array": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "orders",
+                    "type": "array"
+                  }
+                ]
+              },
+              "runAfter": {
+                "List_rows_present_in_a_OrderPropertyValues_table": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_orderItems_array": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "orderItems",
+                    "type": "array"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_orders_array": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_ItemProperties_array": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "ItemProperties",
+                    "type": "array"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_orderItems_array": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_itemPropertyValues_array": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "itemPropertyValues",
+                    "type": "array"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_ItemProperties_array": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_orderProperties_array": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "orderProperties",
+                    "type": "array"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_itemPropertyValues_array": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_orderPropertyValues_array": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "orderPropertyValues",
+                    "type": "array"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_orderProperties_array": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "For_each_order": {
+              "type": "Foreach",
+              "foreach": "@body('List_rows_present_in_a_Orders_table')?['value']",
+              "actions": {
+                "Filter_orderItems_array": {
+                  "type": "Query",
+                  "inputs": {
+                    "from": "@body('List_rows_present_in_a_OrderItems_table')?['value']",
+                    "where": "@equals(item()?['order/number'], items('For_each_order')?['order/number'])"
+                  },
+                  "runAfter": {}
+                },
+                "Set_empty_orderItems_array": {
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "orderItems",
+                    "value": []
+                  },
+                  "runAfter": {
+                    "Filter_orderItems_array": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "For_each_orderItem": {
+                  "type": "Foreach",
+                  "foreach": "@body('Filter_orderItems_array')",
+                  "actions": {
+                    "Filter_itemProperties_array": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@body('List_rows_present_in_a_ItemProperties_table')?['value']",
+                        "where": "@and(equals(item()?['order/number'], items('For_each_orderItem')?['order/number']),equals(item()?['products/sku'], items('For_each_orderItem')?['products/sku']))"
+                      },
+                      "runAfter": {}
+                    },
+                    "Set_empty_itemProperties_array": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "ItemProperties",
+                        "value": []
+                      },
+                      "runAfter": {
+                        "Filter_itemProperties_array": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "For_each_itemProperty": {
+                      "type": "Foreach",
+                      "foreach": "@body('Filter_itemProperties_array')",
+                      "actions": {
+                        "Filter_itemPropertyValues_array": {
+                          "type": "Query",
+                          "inputs": {
+                            "from": "@body('List_rows_present_in_a_ItemPropertyValues_table')?['value']",
+                            "where": "@and(equals(item()?['order/number'], items('For_each_itemProperty')?['order/number']),and(equals(item()?['products/sku'], items('For_each_itemProperty')?['products/sku']),equals(item()?['products/dynamicProperties/name'], items('For_each_itemProperty')?['products/dynamicProperties/name'])))"
+                          },
+                          "runAfter": {}
+                        },
+                        "Set_empty_itemPropertyValues_array": {
+                          "type": "SetVariable",
+                          "inputs": {
+                            "name": "itemPropertyValues",
+                            "value": []
+                          },
+                          "runAfter": {
+                            "Filter_itemPropertyValues_array": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "For_each_itemPropertyValue": {
+                          "type": "Foreach",
+                          "foreach": "@body('Filter_itemPropertyValues_array')",
+                          "actions": {
+                            "Append_to_itemPropertyValues_array": {
+                              "type": "AppendToArrayVariable",
+                              "inputs": {
+                                "name": "itemPropertyValues",
+                                "value": {
+                                  "value": "@{items('For_each_itemPropertyValue')?['products/dynamicProperties/value']}",
+                                  "valueType": "ShortText",
+                                  "propertyName": "@{items('For_each_itemProperty')?['products/dynamicProperties/name']}"
+                                }
+                              },
+                              "runAfter": {}
+                            }
+                          },
+                          "runAfter": {
+                            "Set_empty_itemPropertyValues_array": [
+                              "Succeeded"
+                            ]
+                          },
+                          "runtimeConfiguration": {
+                            "concurrency": {
+                              "repetitions": 2
+                            }
+                          }
+                        },
+                        "Append_to_itemProperties_array": {
+                          "type": "AppendToArrayVariable",
+                          "inputs": {
+                            "name": "ItemProperties",
+                            "value": {
+                              "name": "@{items('For_each_itemProperty')?['products/dynamicProperties/name']}",
+                              "valueType": "ShortText",
+                              "values": "@variables('itemPropertyValues')"
+                            }
+                          },
+                          "runAfter": {
+                            "For_each_itemPropertyValue": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "Set_empty_itemProperties_array": [
+                          "Succeeded"
+                        ]
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      }
+                    },
+                    "Append_to_orderItems_array": {
+                      "type": "AppendToArrayVariable",
+                      "inputs": {
+                        "name": "orderItems",
+                        "value": {
+                          "currency": "@items('For_each_orderItem')?['products/currency']",
+                          "dynamicProperties": "@variables('itemProperties')",
+                          "name": "@items('For_each_orderItem')?['products/name']",
+                          "price": "@float(items('For_each_orderItem')?['products/price'])",
+                          "quantity": "@int(items('For_each_orderItem')?['products/quantity'])",
+                          "sku": "@items('For_each_orderItem')?['products/sku']"
+                        }
+                      },
+                      "runAfter": {
+                        "For_each_itemProperty": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Set_empty_orderItems_array": [
+                      "Succeeded"
+                    ]
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  }
+                },
+                "Filter_orderProperties_array": {
+                  "type": "Query",
+                  "inputs": {
+                    "from": "@body('List_rows_present_in_a_OrderProperties_table')?['value']",
+                    "where": "@equals(item()?['order/number'], items('For_each_order')?['order/number'])"
+                  },
+                  "runAfter": {
+                    "For_each_orderItem": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Set_empty_orderProperties_array": {
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "orderProperties",
+                    "value": []
+                  },
+                  "runAfter": {
+                    "Filter_orderProperties_array": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "For_each_orderProperty": {
+                  "type": "Foreach",
+                  "foreach": "@body('Filter_orderProperties_array')",
+                  "actions": {
+                    "Filter_orderPropertyValues_array": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@body('List_rows_present_in_a_OrderPropertyValues_table')?['value']",
+                        "where": "@and(equals(item()?['order/number'], items('For_each_orderProperty')?['order/number']), equals(item()?['order/dynamicProperties/name'], items('For_each_orderProperty')?['order/dynamicProperties/name']))"
+                      },
+                      "runAfter": {}
+                    },
+                    "Set_empty_orderPropertyValues_array": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "orderPropertyValues",
+                        "value": []
+                      },
+                      "runAfter": {
+                        "Filter_orderPropertyValues_array": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "For_each_orderPropertyValue": {
+                      "type": "Foreach",
+                      "foreach": "@body('Filter_orderPropertyValues_array')",
+                      "actions": {
+                        "Append_to_orderpropertyValues_array": {
+                          "type": "AppendToArrayVariable",
+                          "inputs": {
+                            "name": "orderPropertyValues",
+                            "value": {
+                              "value": "@{items('For_each_orderPropertyValue')?['order/dynamicProperties/value']}",
+                              "valueType": "ShortText",
+                              "propertyName": "@{items('For_each_orderProperty')?['order/dynamicProperties/name']}"
+                            }
+                          },
+                          "runAfter": {}
+                        }
+                      },
+                      "runAfter": {
+                        "Set_empty_orderPropertyValues_array": [
+                          "Succeeded"
+                        ]
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 2
+                        }
+                      }
+                    },
+                    "Append_to_orderProperties_array": {
+                      "type": "AppendToArrayVariable",
+                      "inputs": {
+                        "name": "orderProperties",
+                        "value": {
+                          "name": "@{items('For_each_orderProperty')?['order/dynamicProperties/name']}",
+                          "valueType": "ShortText",
+                          "values": "@variables('orderPropertyValues')"
+                        }
+                      },
+                      "runAfter": {
+                        "For_each_orderPropertyValue": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Set_empty_orderProperties_array": [
+                      "Succeeded"
+                    ]
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  }
+                },
+                "Append_to_orders_array": {
+                  "type": "AppendToArrayVariable",
+                  "inputs": {
+                    "name": "orders",
+                    "value": {
+                      "order": {
+                        "createdDate": "@{items('For_each_order')?['order/createdDate']}",
+                        "currency": "@{items('For_each_order')['order/currency']}",
+                        "customerId": "@{items('For_each_order')['order/customerId']}",
+                        "customerName": "@{items('For_each_order')?['order/customerName']}",
+                        "dynamicProperties": "@variables('orderProperties')",
+                        "number": "@{items('For_each_order')['order/number']}",
+                        "status": "@{items('For_each_order')['order/status']}"
+                      },
+                      "products": "@variables('orderItems')"
+                    }
+                  },
+                  "runAfter": {
+                    "For_each_orderProperty": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Initialize_orderPropertyValues_array": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "concurrency": {
+                  "repetitions": 1
+                }
+              }
+            },
+            "vc-odt-import-orders": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "triggerName": "request",
+                  "workflow": {
+                    "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedLogicAppName'))]"
+                  }
+                },
+                "body": "@{variables('orders')}"
+              },
+              "runAfter": {
+                "For_each_order": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            },
+            "vcOdtImportLogicAppWorkflow": {
+              "type": "string",
+              "defaultValue": "/subscriptions/865280ac-6a6b-46b2-a9cd-278d963787db/resourceGroups/vc-odt-import-orders/providers/Microsoft.Logic/workflows/vc-odt-import-orders"
+            }
+          },
+          "triggers": {
+            "request": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {},
+                "method": "GET"
+              }
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "excelonlinebusiness_1": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'excelonlinebusiness')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('excelonlinebusiness_2_Connection_Name'))]",
+                "connectionName": "[parameters('excelonlinebusiness_2_Connection_Name')]"
+              }
+            }
+          },
+          "vcOdtImportLogicAppWorkflow": {
+            "value": "[concat('/subscriptions/', subscription().id, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/vc-odt-import-orders')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', parameters('excelonlinebusiness_2_Connection_Name'))]"
+      ]
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2018-07-01-preview",
+      "name": "[parameters('excelonlinebusiness_1_Connection_Name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'excelonlinebusiness')]"
+        },
+        "displayName": "[parameters('excelonlinebusiness_1_Connection_DisplayName')]"
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2018-07-01-preview",
+      "name": "[parameters('excelonlinebusiness_2_Connection_Name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'excelonlinebusiness')]"
+        },
+        "displayName": "[parameters('excelonlinebusiness_2_Connection_DisplayName')]"
+      }
+    }
+  ],
+  "outputs": {}
+}

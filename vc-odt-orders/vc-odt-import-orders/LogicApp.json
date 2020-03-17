@@ -1,0 +1,673 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "metadata": {
+        "description": "Name of the Logic App."
+      }
+    },
+    "logicAppLocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "allowedValues": [
+        "[resourceGroup().location]",
+        "eastasia",
+        "southeastasia",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "westeurope",
+        "japanwest",
+        "japaneast",
+        "brazilsouth",
+        "australiaeast",
+        "australiasoutheast",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "canadacentral",
+        "canadaeast",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westus2",
+        "koreacentral",
+        "koreasouth",
+        "francecentral",
+        "francesouth",
+        "southafricanorth",
+        "southafricawest"
+      ],
+      "metadata": {
+        "description": "Location of the Logic App."
+      }
+    },
+    "storeIdParam": {
+      "type": "securestring"
+    },
+    "catalogIdParam": {
+      "type": "string"
+    },
+    "passwordParam": {
+      "type": "securestring"
+    },
+    "urlParam": {
+      "type": "string"
+    },
+    "usernameParam": {
+      "type": "securestring"
+    },
+    "nestedCreateLogicAppName": {
+      "type": "string",
+      "defaultValue": "vc-odt-create-order"
+    },
+    "nestedUpdateLogicAppName": {
+      "type": "string",
+      "defaultValue": "vc-odt-update-order"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "name": "[parameters('logicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('logicAppLocation')]",
+      "tags": {
+        "displayName": "LogicApp"
+      },
+      "apiVersion": "2016-06-01",
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Initialize_ordersArray": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "ordersArray",
+                    "type": "array",
+                    "value": "@json(triggerBody())"
+                  }
+                ]
+              },
+              "runAfter": {}
+            },
+            "For_each_new_order": {
+              "type": "Foreach",
+              "foreach": "@body('Filter_new_orders')",
+              "actions": {
+                "For_each_productItem": {
+                  "type": "Foreach",
+                  "foreach": "@items('For_each_new_order')['products']",
+                  "actions": {
+                    "Append_to_productItemsArray": {
+                      "type": "AppendToArrayVariable",
+                      "inputs": {
+                        "name": "productItemsArray",
+                        "value": {
+                          "price": "@items('For_each_productItem')?['price']",
+                          "quantity": "@items('For_each_productItem')?['quantity']",
+                          "sku": "@items('For_each_productItem')?['sku']",
+                          "name": "@items('For_each_productItem')?['name']",
+                          "currency": "@items('For_each_productItem')?['currency']",
+                          "ProductId": "00000000000000000000000000000000",
+                          "CatalogId": "@{parameters('catalogId')}",
+                          "dynamicProperties": "@items('For_each_productItem')?['dynamicProperties']"
+                        }
+                      },
+                      "runAfter": {}
+                    }
+                  },
+                  "runAfter": {
+                    "Set_productItemArray_empty": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Set_productItemArray_empty": {
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "productItemsArray",
+                    "value": []
+                  },
+                  "runAfter": {}
+                },
+                "vc-odt-create-order": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "triggerName": "request",
+                      "workflow": {
+                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedCreateLogicAppName'))]"
+                      }
+                    },
+                    "body": "@outputs('Compose_new_order')"
+                  },
+                  "runAfter": {
+                    "Compose_new_order": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Compose_new_order": {
+                  "type": "Compose",
+                  "inputs": {
+                    "connection": {
+                      "endpointUrl": "@parameters('endpointUrl')",
+                      "accessToken": "@body('Parse_token_JSON')?['access_token']"
+                    },
+                    "order": {
+                      "customerId": "@{items('For_each_new_order')?['order']?['customerId']}",
+                      "customerName": "@{items('For_each_new_order')?['order']?['customerName']}",
+                      "StoreId": "@{parameters('storeId')}",
+                      "currency": "@{items('For_each_new_order')?['order']?['currency']}",
+                      "number": "@{items('For_each_new_order')?['order']?['number']}",
+                      "status": "@{items('For_each_new_order')?['order']?['status']}",
+                      "createdDate": "@{items('For_each_new_order')?['order']?['createdDate']}",
+                      "items": "@variables('productItemsArray')",
+                      "dynamicProperties": "@items('For_each_new_order')?['order']?['dynamicProperties']"
+                    }
+                  },
+                  "runAfter": {
+                    "For_each_productItem": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Filter_new_orders": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "concurrency": {
+                  "repetitions": 1
+                }
+              }
+            },
+            "Initialize_productItemsArray": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "productItemsArray",
+                    "type": "array"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_ordersArray": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Response": {
+              "type": "Response",
+              "kind": "http",
+              "inputs": {
+                "statusCode": 200,
+                "body": "Orders successfully imported"
+              },
+              "runAfter": {
+                "For_each_changed_order": [
+                  "Succeeded"
+                ],
+                "For_each_new_order": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "OrderModule_Search": {
+              "type": "Http",
+              "inputs": {
+                "method": "post",
+                "body": {
+                  "numbers": "@variables('inputOrderNumbersArray')"
+                },
+                "headers": {
+                  "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']}",
+                  "Content-Type": "application/json"
+                },
+                "uri": "@concat(parameters('endpointUrl'),'api/order/customerOrders/search')"
+              },
+              "runAfter": {
+                "Parse_token_JSON": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "apiDefinitionUrl": "@concat(parameters('endpointUrl'),'docs/VirtoCommerce.Orders/swagger.json')",
+                "swaggerSource": "custom"
+              }
+            },
+            "Select_input_order_numbers": {
+              "type": "Select",
+              "inputs": {
+                "from": "@variables('ordersArray')",
+                "select": {
+                  "number": "@item()?['order']?['number']"
+                }
+              },
+              "runAfter": {
+                "For_each_input_order": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Select_exist_order_numbers": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('OrderModule_Search')?['customerOrders']",
+                "select": {
+                  "number": "@item()?['number']"
+                }
+              },
+              "runAfter": {
+                "OrderModule_Search": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Filter_new_orders": {
+              "type": "Query",
+              "inputs": {
+                "from": "@variables('ordersArray')",
+                "where": "@equals(contains(body('Select_exist_order_numbers'), json(concat('{number:\"', item()?['order']?['number'], '\"}'))), false)"
+              },
+              "runAfter": {
+                "Select_exist_order_numbers_and_statuses": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "HTTP_get_token": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "@{concat(parameters('endpointUrl'),'connect/token')}",
+                "headers": {
+                  "Content-Type": "application/x-www-form-urlencoded"
+                },
+                "body": "@concat('grant_type=password&password=',encodeUriComponent(parameters('endpointPassword')),'&username=',encodeUriComponent(parameters('endpointUsername')))"
+              },
+              "runAfter": {
+                "Select_input_order_numbers": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Parse_token_JSON": {
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('HTTP_get_token')",
+                "schema": {
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "expires_in": {
+                      "type": "integer"
+                    },
+                    "token_type": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "runAfter": {
+                "HTTP_get_token": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "For_each_input_order": {
+              "type": "Foreach",
+              "foreach": "@variables('ordersArray')",
+              "actions": {
+                "Append_to_array_variable": {
+                  "type": "AppendToArrayVariable",
+                  "inputs": {
+                    "name": "inputOrderNumbersArray",
+                    "value": "@items('For_each_input_order')?['order']['number']"
+                  },
+                  "runAfter": {}
+                }
+              },
+              "runAfter": {
+                "Initialize_inputOrderNumbersArray": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_inputOrderNumbersArray": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "inputOrderNumbersArray",
+                    "type": "array"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_productItemsArray": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Select_exist_order_numbers_and_statuses": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('OrderModule_Search')?['customerOrders']",
+                "select": {
+                  "number": "@item()?['number']",
+                  "status": "@item()?['status']"
+                }
+              },
+              "runAfter": {
+                "Select_exist_order_numbers": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Filter_new_and_changed_orders": {
+              "type": "Query",
+              "inputs": {
+                "from": "@variables('ordersArray')",
+                "where": "@equals(contains(body('Select_exist_order_numbers_and_statuses'), json(concat('{number:\"', item()?['order']?['number'], '\", status:\"', item()?['order']?['status'], '\"}'))), false)"
+              },
+              "runAfter": {
+                "Select_exist_order_numbers_and_statuses": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Filter_changed_orders": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Filter_new_and_changed_orders')",
+                "where": "@equals(contains(body('Select_exist_order_numbers'), json(concat('{number:\"', item()?['order']?['number'], '\"}'))), true)"
+              },
+              "runAfter": {
+                "Filter_new_and_changed_orders": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "For_each_changed_order": {
+              "type": "Foreach",
+              "foreach": "@body('Filter_changed_orders')",
+              "actions": {
+                "vc-odt-update-order": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "triggerName": "request",
+                      "workflow": {
+                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedUpdateLogicAppName'))]"
+                      }
+                    },
+                    "body": "@outputs('Compose_updated_order')"
+                  },
+                  "runAfter": {
+                    "Compose_updated_order": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "OrderModule_GetByNumber": {
+                  "type": "Http",
+                  "inputs": {
+                    "method": "get",
+                    "headers": {
+                      "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']}",
+                      "Content-Type": "application/json"
+                    },
+                    "uri": "@concat(parameters('endpointUrl'),'api/order/customerOrders//number/',encodeURIComponent(items('For_each_changed_order')?['order']?['number']))"
+                  },
+                  "runAfter": {},
+                  "metadata": {
+                    "apiDefinitionUrl": "@concat(parameters('endpointUrl'),'docs/VirtoCommerce.Orders/swagger.json')",
+                    "swaggerSource": "custom"
+                  }
+                },
+                "Compose_updated_order": {
+                  "type": "Compose",
+                  "inputs": {
+                    "connection": {
+                      "endpointUrl": "@parameters('endpointUrl')",
+                      "accessToken": "@body('Parse_token_JSON')?['access_token']"
+                    },
+                    "order": "@setProperty(body('OrderModule_GetByNumber'),'status',items('For_each_changed_order')?['order']?['status'])"
+                  },
+                  "runAfter": {
+                    "OrderModule_GetByNumber": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Filter_changed_orders": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "concurrency": {
+                  "repetitions": 1
+                }
+              }
+            }
+          },
+          "parameters": {
+            "storeId": {
+              "defaultValue": "Electronics",
+              "type": "string"
+            },
+            "catalogId": {
+              "defaultValue": "Electronics",
+              "type": "string"
+            },
+            "endpointPassword": {
+              "type": "securestring"
+            },
+            "endpointUrl": {
+              "type": "string"
+            },
+            "endpointUsername": {
+              "type": "securestring"
+            }
+          },
+          "triggers": {
+            "request": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "order": {
+                        "type": "object",
+                        "properties": {
+                          "createdDate": {
+                            "type": "string"
+                          },
+                          "currency": {
+                            "type": "string"
+                          },
+                          "customerId": {
+                            "type": "string"
+                          },
+                          "customerName": {
+                            "type": "string"
+                          },
+                          "dynamicProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "valueType": {
+                                  "type": "string"
+                                },
+                                "values": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string"
+                                      },
+                                      "valueType": {
+                                        "type": "string"
+                                      },
+                                      "propertyName": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "valueType",
+                                      "propertyName"
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "name",
+                                "valueType",
+                                "values"
+                              ]
+                            }
+                          },
+                          "number": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "products": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "currency": {
+                              "type": "string"
+                            },
+                            "dynamicProperties": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "valueType": {
+                                    "type": "string"
+                                  },
+                                  "values": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "value": {
+                                          "type": "string"
+                                        },
+                                        "valueType": {
+                                          "type": "string"
+                                        },
+                                        "propertyName": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "value",
+                                        "valueType",
+                                        "propertyName"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "valueType",
+                                  "values"
+                                ]
+                              }
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "price": {
+                              "type": "number"
+                            },
+                            "quantity": {
+                              "type": "integer"
+                            },
+                            "sku": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "currency",
+                            "dynamicProperties",
+                            "name",
+                            "price",
+                            "quantity",
+                            "sku"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "order",
+                      "products"
+                    ]
+                  }
+                },
+                "method": "POST"
+              }
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
+        },
+        "parameters": {
+          "storeId": {
+            "value": "[parameters('storeIdParam')]"
+          },
+          "catalogId": {
+            "value": "[parameters('catalogIdParam')]"
+          },
+          "endpointPassword": {
+            "value": "[parameters('passwordParam')]"
+          },
+          "endpointUsername": {
+            "value": "[parameters('usernameParam')]"
+          },
+          "endpointUrl": {
+            "value": "[parameters('urlParam')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
