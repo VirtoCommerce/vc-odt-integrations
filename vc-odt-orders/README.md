@@ -8,11 +8,10 @@ Solution contains 4 projects:
 
 1. **vc-odt-read-orders-xls** - Mock Logic App for read orders from demo xlsx.
 
-Demo file with orders now placed in SharePoint\VirtoCommerce\Training\ODT\odtorders.xlsx
-
 ARM parameters:
 
 * *nestedLogicAppName* - name for nested LogicApp (default value - integration vc-odt-create-order);
+* *excelPath* - path for dev, qa and demo environments demo excel file (default value - /Sales/ODT/odtorders_dev.xlsx). Demo Excel file should be placed in “http://virto365.sharepoint.com/sites/VirtoCommerce/Shared Documents” library.
 
 2. **vc-odt-import-orders** - Logic App for parse orders list and create single order object ready for VirtoCommerce platform V3 orders creation API.
 
