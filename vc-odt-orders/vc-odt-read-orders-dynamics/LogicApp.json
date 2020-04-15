@@ -82,13 +82,13 @@
         "definition": {
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "actions": {
-            "Initialize_order_variable": {
+            "Initialize_orders_array": {
               "type": "InitializeVariable",
               "inputs": {
                 "variables": [
                   {
-                    "name": "order",
-                    "type": "object"
+                    "name": "orders",
+                    "type": "array"
                   }
                 ]
               },
@@ -105,29 +105,29 @@
                 ]
               },
               "runAfter": {
-                "Initialize_order_variable": [
+                "Initialize_orders_array": [
                   "Succeeded"
                 ]
               }
             },
-            "List_products": {
-              "type": "ApiConnection",
+            "vc-odt-import-orders": {
+              "type": "Workflow",
               "inputs": {
                 "host": {
-                  "connection": {
-                    "name": "@parameters('$connections')['dynamicscrmonline']['connectionId']"
+                  "triggerName": "request",
+                  "workflow": {
+                    "id": "/subscriptions/865280ac-6a6b-46b2-a9cd-278d963787db/resourceGroups/vc-odt-import-orders/providers/Microsoft.Logic/workflows/vc-odt-import-orders"
                   }
                 },
-                "method": "get",
-                "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('salesorderdetails'))}/items"
+                "body": "@{variables('orders')}"
               },
               "runAfter": {
-                "Get_record": [
+                "For_each_Order": [
                   "Succeeded"
                 ]
               }
             },
-            "Get_record": {
+            "List_orders": {
               "type": "ApiConnection",
               "inputs": {
                 "host": {
@@ -136,10 +136,190 @@
                   }
                 },
                 "method": "get",
-                "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('transactioncurrencies'))}/items/@{encodeURIComponent(encodeURIComponent('123'))}"
+                "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('salesorders'))}/items",
+                "queries": {
+                  "$filter": "new_exported eq false"
+                }
               },
               "runAfter": {
                 "Initialize_products_array": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "For_each_Order": {
+              "type": "Foreach",
+              "foreach": "@body('List_orders')?['value']",
+              "actions": {
+                "Get_order_currency": {
+                  "type": "ApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['dynamicscrmonline']['connectionId']"
+                      }
+                    },
+                    "method": "get",
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('transactioncurrencies'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_order')?['_transactioncurrencyid_value']))}"
+                  },
+                  "runAfter": {}
+                },
+                "Get_order_customer": {
+                  "type": "ApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['dynamicscrmonline']['connectionId']"
+                      }
+                    },
+                    "method": "get",
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('accounts'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_Order')?['_customerid_value']))}"
+                  },
+                  "runAfter": {
+                    "Get_order_currency": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "List_products": {
+                  "type": "ApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['dynamicscrmonline']['connectionId']"
+                      }
+                    },
+                    "method": "get",
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('salesorderdetails'))}/items",
+                    "queries": {
+                      "$filter": "_salesorderid_value eq @{items('For_each_Order')?['ItemInternalId']}"
+                    }
+                  },
+                  "runAfter": {
+                    "Get_order_customer": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "For_each_Product": {
+                  "type": "Foreach",
+                  "foreach": "@body('List_products')?['value']",
+                  "actions": {
+                    "Append_to_products_array": {
+                      "type": "AppendToArrayVariable",
+                      "inputs": {
+                        "name": "products",
+                        "value": {
+                          "currency": "@body('Get_product_currency')?['isocurrencycode']",
+                          "dynamicProperties": [],
+                          "name": "@items('For_each_Product')?['productname']",
+                          "price": "@items('For_each_Product')?['priceperunit']",
+                          "quantity": "@items('For_each_Product')?['quantity']",
+                          "sku": "@body('Get_produkt_sku')?['productnumber']"
+                        }
+                      },
+                      "runAfter": {
+                        "Get_produkt_sku": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Get_product_currency": {
+                      "type": "ApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connection": {
+                            "name": "@parameters('$connections')['dynamicscrmonline']['connectionId']"
+                          }
+                        },
+                        "method": "get",
+                        "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('transactioncurrencies'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_Product')?['_transactioncurrencyid_value']))}"
+                      },
+                      "runAfter": {}
+                    },
+                    "Get_produkt_sku": {
+                      "type": "ApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connection": {
+                            "name": "@parameters('$connections')['dynamicscrmonline']['connectionId']"
+                          }
+                        },
+                        "method": "get",
+                        "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('products'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_Product')?['_productid_value']))}"
+                      },
+                      "runAfter": {
+                        "Get_product_currency": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "List_products": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Append_to_orders_array": {
+                  "type": "AppendToArrayVariable",
+                  "inputs": {
+                    "name": "orders",
+                    "value": {
+                      "order": {
+                        "createdDate": "@items('for_each_order')?['createdon']",
+                        "currency": "@body('Get_order_currency')?['isocurrencycode']",
+                        "customerId": "@body('Get_order_customer')?['emailaddress1']",
+                        "customerName": "@body('Get_order_customer')?['name']",
+                        "dynamicProperties": [],
+                        "number": "@items('For_each_Order')?['ordernumber']",
+                        "status": "@items('For_each_Order')?['_statecode_label']"
+                      },
+                      "products": "@variables('products')"
+                    }
+                  },
+                  "runAfter": {
+                    "For_each_Product": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Update_order_exported_status": {
+                  "type": "ApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['dynamicscrmonline']['connectionId']"
+                      }
+                    },
+                    "method": "patch",
+                    "body": {
+                      "new_exported": true
+                    },
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('salesorders'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_order')?['ItemInternalId']))}"
+                  },
+                  "runAfter": {
+                    "Append_to_orders_array": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "List_orders": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Response": {
+              "type": "Response",
+              "kind": "http",
+              "inputs": {
+                "statusCode": 200,
+                "body": "@body('vc-odt-import-orders')"
+              },
+              "runAfter": {
+                "vc-odt-import-orders": [
                   "Succeeded"
                 ]
               }
@@ -155,22 +335,13 @@
             }
           },
           "triggers": {
-            "When_a_order_record_is_created": {
-              "type": "ApiConnection",
+            "request": {
+              "type": "Request",
+              "kind": "Http",
               "inputs": {
-                "host": {
-                  "connection": {
-                    "name": "@parameters('$connections')['dynamicscrmonline']['connectionId']"
-                  }
-                },
-                "method": "get",
-                "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('salesorders'))}/onnewitems"
-              },
-              "recurrence": {
-                "frequency": "Hour",
-                "interval": 1
-              },
-              "splitOn": "@triggerBody()?['value']"
+                "schema": {},
+                "method": "GET"
+              }
             }
           },
           "contentVersion": "1.0.0.0",
