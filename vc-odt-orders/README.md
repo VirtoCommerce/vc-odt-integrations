@@ -6,6 +6,14 @@ Logic App implements a integration scenario with Virto Commerce Box and Mock for
 
 Solution contains 4 projects:
 
+1. **vc-odt-read-orders-dynamics** - Logic App for read orders from demo Dynamics ERP.
+
+ARM parameters:
+
+* *nestedLogicAppName* - name for nested LogicApp (default value - integration vc-odt-create-order);
+* *organizationNameParam* - encoded Dynamics organization name (default value - org363c224b.crm). 
+
+
 1. **vc-odt-read-orders-xls** - Mock Logic App for read orders from demo xlsx.
 
 ARM parameters:

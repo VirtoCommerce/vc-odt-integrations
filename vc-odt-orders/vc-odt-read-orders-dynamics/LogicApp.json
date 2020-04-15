@@ -141,7 +141,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('salesorders'))}/items",
+                "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('salesorders'))}/items",
                 "queries": {
                   "$filter": "new_exported eq false"
                 }
@@ -165,7 +165,7 @@
                       }
                     },
                     "method": "get",
-                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('transactioncurrencies'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_order')?['_transactioncurrencyid_value']))}"
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('transactioncurrencies'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_order')?['_transactioncurrencyid_value']))}"
                   },
                   "runAfter": {}
                 },
@@ -178,7 +178,7 @@
                       }
                     },
                     "method": "get",
-                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('accounts'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_Order')?['_customerid_value']))}"
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('accounts'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_Order')?['_customerid_value']))}"
                   },
                   "runAfter": {
                     "Get_order_currency": [
@@ -195,7 +195,7 @@
                       }
                     },
                     "method": "get",
-                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('salesorderdetails'))}/items",
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('salesorderdetails'))}/items",
                     "queries": {
                       "$filter": "_salesorderid_value eq @{items('For_each_Order')?['ItemInternalId']}"
                     }
@@ -238,7 +238,7 @@
                           }
                         },
                         "method": "get",
-                        "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('transactioncurrencies'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_Product')?['_transactioncurrencyid_value']))}"
+                        "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('transactioncurrencies'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_Product')?['_transactioncurrencyid_value']))}"
                       },
                       "runAfter": {}
                     },
@@ -251,7 +251,7 @@
                           }
                         },
                         "method": "get",
-                        "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('products'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_Product')?['_productid_value']))}"
+                        "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('products'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_Product')?['_productid_value']))}"
                       },
                       "runAfter": {
                         "Get_product_currency": [
@@ -292,16 +292,16 @@
                 "Update_order_exported_status": {
                   "type": "ApiConnection",
                   "inputs": {
+                    "body": {
+                      "new_exported": true
+                    },
                     "host": {
                       "connection": {
                         "name": "@parameters('$connections')['dynamicscrmonline']['connectionId']"
                       }
                     },
                     "method": "patch",
-                    "body": {
-                      "new_exported": true
-                    },
-                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('salesorders'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_order')?['ItemInternalId']))}"
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('salesorders'))}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_order')?['ItemInternalId']))}"
                   },
                   "runAfter": {
                     "Append_to_orders_array": [
