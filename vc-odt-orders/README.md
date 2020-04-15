@@ -6,7 +6,7 @@ LogicApp implements a integration scenario with Virto Commerce Box and Mock for 
 
 Solution contains 4 projects:
 
-1. **vc-odt-read-orders-dynamics** - LogicApp for read orders from demo Dynamics ERP.
+1. **vc-odt-read-orders-dynamics** - LogicApp to read orders from demo Dynamics ERP.
 
 ARM parameters:
 
