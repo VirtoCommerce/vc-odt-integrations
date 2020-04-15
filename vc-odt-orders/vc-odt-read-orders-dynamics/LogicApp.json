@@ -51,7 +51,12 @@
       }
     },
     "organizationNameParam": {
-      "type": "string"
+      "type": "string",
+      "defaultValue": "org363c224b.crm"
+    },
+    "nestedLogicAppName": {
+      "type": "string",
+      "defaultValue": "vc-odt-import-orders"
     },
     "dynamicscrmonline_1_Connection_Name": {
       "type": "string",
@@ -116,7 +121,7 @@
                 "host": {
                   "triggerName": "request",
                   "workflow": {
-                    "id": "/subscriptions/865280ac-6a6b-46b2-a9cd-278d963787db/resourceGroups/vc-odt-import-orders/providers/Microsoft.Logic/workflows/vc-odt-import-orders"
+                    "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedLogicAppName'))]"
                   }
                 },
                 "body": "@{variables('orders')}"
