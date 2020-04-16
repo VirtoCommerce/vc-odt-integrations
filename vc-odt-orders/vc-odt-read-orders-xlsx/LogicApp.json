@@ -50,6 +50,10 @@
         "description": "Location of the Logic App."
       }
     },
+    "excelPath": {
+      "type": "string",
+      "defaultValue": "/Sales/ODT/odtorders_dev.xlsx"
+    },
     "nestedLogicAppName": {
       "type": "string",
       "defaultValue": "vc-odt-import-orders"
@@ -67,6 +71,14 @@
       "defaultValue": "excelonlinebusiness-2"
     },
     "excelonlinebusiness_2_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": "mko@virtoway.com"
+    },
+    "sharepointonline_1_Connection_Name": {
+      "type": "string",
+      "defaultValue": "sharepointonline"
+    },
+    "sharepointonline_1_Connection_DisplayName": {
       "type": "string",
       "defaultValue": "mko@virtoway.com"
     }
@@ -106,15 +118,18 @@
                   }
                 },
                 "method": "get",
-                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent('01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH')}/tables/@{encodeURIComponent('{C2622C04-AFC2-48DD-922C-9D49A387D1E8}')}/items",
+                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent(body('Get_file_metadata_using_path')?['Id'])}/tables/@{encodeURIComponent('{C2622C04-AFC2-48DD-922C-9D49A387D1E8}')}/items",
                 "queries": {
                   "source": "groups/64134d35-983b-43d1-b492-88a7b8523513"
                 }
               },
-              "runAfter": {},
+              "runAfter": {
+                "Get_file_metadata_using_path": [
+                  "Succeeded"
+                ]
+              },
               "metadata": {
-                "01BJSXD57X7SA2IASNEBELQACJTBONGP7P": "/Training/ODT/odtorders.xlsx",
-                "01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH": "/Sales/ODT/odtorders.xlsx"
+                "01BJSXD53SZQ5FMCMJZJDZRQLRQ7RCQ7EH": "@{parameters('vcExcelPath')}"
               }
             },
             "List_rows_present_in_a_OrderItems_table": {
@@ -126,7 +141,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent('01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH')}/tables/@{encodeURIComponent('{9C8E0545-8883-40BC-8734-3A0E5B15BAFD}')}/items",
+                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent(body('Get_file_metadata_using_path')?['Id'])}/tables/@{encodeURIComponent('{9C8E0545-8883-40BC-8734-3A0E5B15BAFD}')}/items",
                 "queries": {
                   "source": "groups/64134d35-983b-43d1-b492-88a7b8523513"
                 }
@@ -138,7 +153,8 @@
               },
               "metadata": {
                 "01BJSXD57X7SA2IASNEBELQACJTBONGP7P": "/Training/ODT/odtorders.xlsx",
-                "01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH": "/Sales/ODT/odtorders.xlsx"
+                "01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH": "/Sales/ODT/odtorders.xlsx",
+                "01BJSXD53SZQ5FMCMJZJDZRQLRQ7RCQ7EH": "{@parameters('vcExcelPath')}"
               }
             },
             "List_rows_present_in_a_ItemProperties_table": {
@@ -150,7 +166,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent('01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH')}/tables/@{encodeURIComponent('{D12BE5DA-0B04-4187-A172-60E4E26F7BD3}')}/items",
+                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent(body('Get_file_metadata_using_path')?['Id'])}/tables/@{encodeURIComponent('{D12BE5DA-0B04-4187-A172-60E4E26F7BD3}')}/items",
                 "queries": {
                   "source": "groups/64134d35-983b-43d1-b492-88a7b8523513"
                 }
@@ -174,7 +190,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent('01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH')}/tables/@{encodeURIComponent('{38DFCE9D-0658-4377-9FB7-90326160E578}')}/items",
+                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent(body('Get_file_metadata_using_path')?['Id'])}/tables/@{encodeURIComponent('{38DFCE9D-0658-4377-9FB7-90326160E578}')}/items",
                 "queries": {
                   "source": "groups/64134d35-983b-43d1-b492-88a7b8523513"
                 }
@@ -198,7 +214,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent('01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH')}/tables/@{encodeURIComponent('{9A8EA656-731C-4A41-A5FA-16ED13E21585}')}/items",
+                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent(body('Get_file_metadata_using_path')?['Id'])}/tables/@{encodeURIComponent('{9A8EA656-731C-4A41-A5FA-16ED13E21585}')}/items",
                 "queries": {
                   "source": "groups/64134d35-983b-43d1-b492-88a7b8523513"
                 }
@@ -222,7 +238,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent('01BJSXD53QS4UB2LSNXNFZQMSSYGAGB3RH')}/tables/@{encodeURIComponent('{5125C541-1AD9-4934-A681-C14DB3B6667F}')}/items",
+                "path": "/drives/@{encodeURIComponent('b!00BgNjAyn0mMHNrih7fVCFJpMaMlQghOiO6Rvdy8uFeSJQ-G3_1cRL6yZzEdaQpQ')}/files/@{encodeURIComponent(body('Get_file_metadata_using_path')?['Id'])}/tables/@{encodeURIComponent('{5125C541-1AD9-4934-A681-C14DB3B6667F}')}/items",
                 "queries": {
                   "source": "groups/64134d35-983b-43d1-b492-88a7b8523513"
                 }
@@ -647,6 +663,23 @@
                   "Succeeded"
                 ]
               }
+            },
+            "Get_file_metadata_using_path": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['sharepointonline']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/datasets/@{encodeURIComponent(encodeURIComponent('https://virto365.sharepoint.com/sites/VirtoCommerce'))}/GetFileByPath",
+                "queries": {
+                  "path": "/Shared Documents@{parameters('vcExcelPath')}",
+                  "queryParametersSingleEncoded": true
+                }
+              },
+              "runAfter": {}
             }
           },
           "parameters": {
@@ -657,6 +690,9 @@
             "vcOdtImportLogicAppWorkflow": {
               "type": "string",
               "defaultValue": "/subscriptions/865280ac-6a6b-46b2-a9cd-278d963787db/resourceGroups/vc-odt-import-orders/providers/Microsoft.Logic/workflows/vc-odt-import-orders"
+            },
+            "vcExcelPath": {
+              "type": "string"
             }
           },
           "triggers": {
@@ -679,16 +715,25 @@
                 "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'excelonlinebusiness')]",
                 "connectionId": "[resourceId('Microsoft.Web/connections', parameters('excelonlinebusiness_2_Connection_Name'))]",
                 "connectionName": "[parameters('excelonlinebusiness_2_Connection_Name')]"
+              },
+              "sharepointonline": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'sharepointonline')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('sharepointonline_1_Connection_Name'))]",
+                "connectionName": "[parameters('sharepointonline_1_Connection_Name')]"
               }
             }
           },
           "vcOdtImportLogicAppWorkflow": {
             "value": "[concat('/subscriptions/', subscription().id, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/vc-odt-import-orders')]"
+          },
+          "vcExcelPath": {
+            "value": "[parameters('excelPath')]"
           }
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/connections', parameters('excelonlinebusiness_2_Connection_Name'))]"
+        "[resourceId('Microsoft.Web/connections', parameters('excelonlinebusiness_2_Connection_Name'))]",
+        "[resourceId('Microsoft.Web/connections', parameters('sharepointonline_1_Connection_Name'))]"
       ]
     },
     {
@@ -713,6 +758,18 @@
           "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'excelonlinebusiness')]"
         },
         "displayName": "[parameters('excelonlinebusiness_2_Connection_DisplayName')]"
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2018-07-01-preview",
+      "name": "[parameters('sharepointonline_1_Connection_Name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'sharepointonline')]"
+        },
+        "displayName": "[parameters('sharepointonline_1_Connection_DisplayName')]"
       }
     }
   ],
