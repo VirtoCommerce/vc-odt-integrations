@@ -55,14 +55,19 @@
       "type": "string",
       "defaultValue": "org363c224b.crm"
     },
-    "passwordParam": {
-      "type": "securestring"
+    "dynamicscrmonline_1_Connection_Name": {
+      "type": "string",
+      "defaultValue": "dynamicscrmonline-1"
     },
-    "urlParam": {
-      "type": "string"
+    "dynamicscrmonline_1_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": "mko@virtoway.com"
     },
-    "usernameParam": {
-      "type": "securestring"
+    "dynamicscrmonline_1_token:TenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "The tenant ID for the Azure Active Directory application"
+      }
     }
   },
   "variables": {},
@@ -82,20 +87,97 @@
             "Response": {
               "type": "Response",
               "inputs": {
-                "statusCode": 200
+                "statusCode": 200,
+                "body": "Accout created successfully."
               },
-              "runAfter": {}
+              "runAfter": {
+                "Condition": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "HTTP_Get_member": {
+              "type": "Http",
+              "inputs": {
+                "method": "get",
+                "uri": "@{concat(triggerBody()?['connection']?['endpointUrl'],'api/members/',encodeURIComponent(triggerBody()?['customerId']))}",
+                "headers": {
+                  "Authorization": "Bearer @{triggerBody()?['connection']?['accessToken']}",
+                  "Content-Type": "application/json"
+                }
+              },
+              "runAfter": {},
+              "metadata": {
+                "apiDefinitionUrl": "@concat(triggerBody()?['connection']?['endpointUrl'],'docs/VirtoCommerce.Customer/swagger.json')",
+                "swaggerSource": "custom"
+              }
+            },
+            "List_accounts": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['dynamicscrmonline']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('accounts'))}/items",
+                "queries": {
+                  "$filter": "name eq '@{body('HTTP_Get_member')?['name']}'"
+                }
+              },
+              "runAfter": {
+                "HTTP_Get_member": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Condition": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@empty(body('List_accounts')?['value'])",
+                      "@true"
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Create_a_new_account": {
+                  "type": "ApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['dynamicscrmonline']['connectionId']"
+                      }
+                    },
+                    "method": "post",
+                    "body": {
+                      "name": "@body('HTTP_Get_member')?['name']",
+                      "merged": false,
+                      "emailaddress1": "@{first(body('HTTP_Get_member')?['emails'])}"
+                    },
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('accounts'))}/items"
+                  },
+                  "runAfter": {}
+                }
+              },
+              "runAfter": {
+                "List_accounts": [
+                  "Succeeded"
+                ]
+              }
             }
           },
           "parameters": {
-            "endpointPassword": {
-              "type": "securestring"
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
             },
-            "endpointUrl": {
+            "organizationName": {
               "type": "string"
-            },
-            "endpointUsername": {
-              "type": "securestring"
             }
           },
           "triggers": {
@@ -103,7 +185,25 @@
               "type": "Request",
               "kind": "Http",
               "inputs": {
-                "schema": {}
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "connection": {
+                      "type": "object",
+                      "properties": {
+                        "accessToken": {
+                          "type": "string"
+                        },
+                        "endpointUrl": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "customerId": {
+                      "type": "string"
+                    }
+                  }
+                }
               }
             }
           },
@@ -111,15 +211,36 @@
           "outputs": {}
         },
         "parameters": {
-          "endpointPassword": {
-            "value": "[parameters('passwordParam')]"
+          "$connections": {
+            "value": {
+              "dynamicscrmonline": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'dynamicscrmonline')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('dynamicscrmonline_1_Connection_Name'))]",
+                "connectionName": "[parameters('dynamicscrmonline_1_Connection_Name')]"
+              }
+            }
           },
-          "endpointUsername": {
-            "value": "[parameters('usernameParam')]"
-          },
-          "endpointUrl": {
-            "value": "[parameters('urlParam')]"
+          "organizationName": {
+            "value": "[parameters('organizationNameParam')]"
           }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', parameters('dynamicscrmonline_1_Connection_Name'))]"
+      ]
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2018-07-01-preview",
+      "name": "[parameters('dynamicscrmonline_1_Connection_Name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'dynamicscrmonline')]"
+        },
+        "displayName": "[parameters('dynamicscrmonline_1_Connection_DisplayName')]",
+        "nonSecretParameterValues": {
+          "token:TenantId": "[parameters('dynamicscrmonline_1_token:TenantId')]"
         }
       }
     }
