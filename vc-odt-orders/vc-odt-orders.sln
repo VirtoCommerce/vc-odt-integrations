@@ -15,6 +15,10 @@ Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "vc-odt-read-orders-dynamics
 EndProject
 Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "vc-odt-export-customer-dynamics", "vc-odt-export-customer-dynamics\vc-odt-export-customer-dynamics.deployproj", "{2A4CBDD7-A72E-4335-B78F-1419383069AB}"
 EndProject
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "vc-odt-export-orders", "vc-odt-export-orders\vc-odt-export-orders.deployproj", "{ED6D89AD-F7DD-4834-88F8-E0FBBDFCEC33}"
+EndProject
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "vc-odt-export-products-dynamics", "vc-odt-export-products-dynamics\vc-odt-export-products-dynamics.deployproj", "{626B2BEC-97B3-47C7-9717-2959C29D8288}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +49,14 @@ Global
 		{2A4CBDD7-A72E-4335-B78F-1419383069AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A4CBDD7-A72E-4335-B78F-1419383069AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A4CBDD7-A72E-4335-B78F-1419383069AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED6D89AD-F7DD-4834-88F8-E0FBBDFCEC33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED6D89AD-F7DD-4834-88F8-E0FBBDFCEC33}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED6D89AD-F7DD-4834-88F8-E0FBBDFCEC33}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED6D89AD-F7DD-4834-88F8-E0FBBDFCEC33}.Release|Any CPU.Build.0 = Release|Any CPU
+		{626B2BEC-97B3-47C7-9717-2959C29D8288}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{626B2BEC-97B3-47C7-9717-2959C29D8288}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{626B2BEC-97B3-47C7-9717-2959C29D8288}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{626B2BEC-97B3-47C7-9717-2959C29D8288}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

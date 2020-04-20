@@ -1,0 +1,251 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "metadata": {
+        "description": "Name of the Logic App."
+      }
+    },
+    "logicAppLocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "allowedValues": [
+        "[resourceGroup().location]",
+        "eastasia",
+        "southeastasia",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "westeurope",
+        "japanwest",
+        "japaneast",
+        "brazilsouth",
+        "australiaeast",
+        "australiasoutheast",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "canadacentral",
+        "canadaeast",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westus2",
+        "koreacentral",
+        "koreasouth",
+        "francecentral",
+        "francesouth",
+        "uaecentral",
+        "southafricanorth",
+        "southafricawest"
+      ],
+      "metadata": {
+        "description": "Location of the Logic App."
+      }
+    },
+    "passwordParam": {
+      "type": "securestring"
+    },
+    "urlParam": {
+      "type": "string"
+    },
+    "usernameParam": {
+      "type": "securestring"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "name": "[parameters('logicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('logicAppLocation')]",
+      "tags": {
+        "displayName": "LogicApp"
+      },
+      "apiVersion": "2016-06-01",
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Response": {
+              "type": "Response",
+              "inputs": {
+                "statusCode": 200
+              },
+              "runAfter": {
+                "For_each_order": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "OrderModule_Search": {
+              "type": "Http",
+              "inputs": {
+                "method": "post",
+                "body": {
+                  "status": "New"
+                },
+                "headers": {
+                  "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']}",
+                  "Content-Type": "application/json"
+                },
+                "uri": "@concat(parameters('endpointUrl'),'api/order/customerOrders/search')"
+              },
+              "runAfter": {
+                "Parse_token_JSON": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "apiDefinitionUrl": "@concat(parameters('endpointUrl'),'docs/VirtoCommerce.Orders/swagger.json')",
+                "swaggerSource": "custom"
+              }
+            },
+            "HTTP_get_token": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "@{concat(parameters('endpointUrl'),'connect/token')}",
+                "headers": {
+                  "Content-Type": "application/x-www-form-urlencoded"
+                },
+                "body": "@concat('grant_type=password&password=',encodeUriComponent(parameters('endpointPassword')),'&username=',encodeUriComponent(parameters('endpointUsername')))"
+              },
+              "runAfter": {}
+            },
+            "Parse_token_JSON": {
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('HTTP_get_token')",
+                "schema": {
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "expires_in": {
+                      "type": "integer"
+                    },
+                    "token_type": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "runAfter": {
+                "HTTP_get_token": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "For_each_order": {
+              "type": "Foreach",
+              "foreach": "@body('OrderModule_Search')",
+              "actions": {
+                "vc-odt-export-customer-dynamics": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "triggerName": "request",
+                      "workflow": {
+                        "id": "/subscriptions/865280ac-6a6b-46b2-a9cd-278d963787db/resourceGroups/vc-odt-import-orders/providers/Microsoft.Logic/workflows/vc-odt-export-customer-dynamics"
+                      }
+                    },
+                    "body": {
+                      "connection": {
+                        "accessToken": "@body('Parse_token_JSON')?['access_token']",
+                        "endpointUrl": "@parameters('endpointUrl')"
+                      },
+                      "customerId": "@{item('For_each_order')?['customerId']}"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Get_full_order": {
+                  "type": "Http",
+                  "inputs": {
+                    "method": "get",
+                    "uri": "@concat(parameters('endpointUrl'),'api/order/customerOrders/',encodeURIComponent(items('For_each_order')?['id']))"
+                  },
+                  "runAfter": {
+                    "vc-odt-export-customer-dynamics": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "apiDefinitionUrl": "@concat(parameters('endpointUrl'),'docs/VirtoCommerce.Orders/swagger.json')",
+                    "swaggerSource": "custom"
+                  }
+                },
+                "Update_order_status": {
+                  "inputs": {
+                    "body": "@setProperty(body('Get_full_order'),'status','Exported')",
+                    "method": "put",
+                    "uri": "@concat(parameters('endpointUrl'),'api/order/customerOrders')"
+                  },
+                  "metadata": {
+                    "apiDefinitionUrl": "@concat(parameters('endpointUrl'),'docs/VirtoCommerce.Orders/swagger.json')",
+                    "swaggerSource": "custom"
+                  },
+                  "runAfter": {
+                    "Get_full_order": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Http"
+                }
+              },
+              "runAfter": {
+                "OrderModule_Search": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "parameters": {
+            "endpointPassword": {
+              "type": "securestring"
+            },
+            "endpointUrl": {
+              "type": "string"
+            },
+            "endpointUsername": {
+              "type": "securestring"
+            }
+          },
+          "triggers": {
+            "request": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {}
+              }
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
+        },
+        "parameters": {
+          "endpointPassword": {
+            "value": "[parameters('passwordParam')]"
+          },
+          "endpointUsername": {
+            "value": "[parameters('usernameParam')]"
+          },
+          "endpointUrl": {
+            "value": "[parameters('urlParam')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

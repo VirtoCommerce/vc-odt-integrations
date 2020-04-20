@@ -159,7 +159,7 @@
                       "merged": false,
                       "emailaddress1": "@{first(body('HTTP_Get_member')?['emails'])}"
                     },
-                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('accounts'))}/items"
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('accounts'))}/items"
                   },
                   "runAfter": {}
                 }
