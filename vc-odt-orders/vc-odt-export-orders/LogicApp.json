@@ -51,6 +51,18 @@
         "description": "Location of the Logic App."
       }
     },
+    "nestedExportCustomerLogicAppName": {
+        "type": "string",
+        "defaultValue": "vc-odt-export-customer-dynamics"
+    },
+    "nestedExportOrderLogicAppName": {
+        "type": "string",
+        "defaultValue": "vc-odt-export-order-dynamics"
+    },
+    "nestedExportOrderProductsLogicAppName": {
+        "type": "string",
+        "defaultValue": "vc-odt-export-orderproducts-dynamics"
+    },
     "passwordParam": {
       "type": "securestring"
     },
@@ -148,35 +160,20 @@
             },
             "For_each_order": {
               "type": "Foreach",
-              "foreach": "@body('OrderModule_Search')",
+              "foreach": "@body('OrderModule_Search')?['customerOrders']",
               "actions": {
-                "vc-odt-export-customer-dynamics": {
-                  "type": "Workflow",
-                  "inputs": {
-                    "host": {
-                      "triggerName": "request",
-                      "workflow": {
-                        "id": "/subscriptions/865280ac-6a6b-46b2-a9cd-278d963787db/resourceGroups/vc-odt-import-orders/providers/Microsoft.Logic/workflows/vc-odt-export-customer-dynamics"
-                      }
-                    },
-                    "body": {
-                      "connection": {
-                        "accessToken": "@body('Parse_token_JSON')?['access_token']",
-                        "endpointUrl": "@parameters('endpointUrl')"
-                      },
-                      "customerId": "@{item('For_each_order')?['customerId']}"
-                    }
-                  },
-                  "runAfter": {}
-                },
                 "Get_full_order": {
                   "type": "Http",
                   "inputs": {
+                    "headers": {
+                      "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']}",
+                      "Content-Type": "application/json"
+                    },
                     "method": "get",
                     "uri": "@concat(parameters('endpointUrl'),'api/order/customerOrders/',encodeURIComponent(items('For_each_order')?['id']))"
                   },
                   "runAfter": {
-                    "vc-odt-export-customer-dynamics": [
+                    "For_each_order_product": [
                       "Succeeded"
                     ]
                   },
@@ -188,6 +185,10 @@
                 "Update_order_status": {
                   "inputs": {
                     "body": "@setProperty(body('Get_full_order'),'status','Exported')",
+                    "headers": {
+                      "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']}",
+                      "Content-Type": "application/json"
+                    },
                     "method": "put",
                     "uri": "@concat(parameters('endpointUrl'),'api/order/customerOrders')"
                   },
@@ -201,6 +202,79 @@
                     ]
                   },
                   "type": "Http"
+                },
+                "For_each_order_product": {
+                  "type": "Foreach",
+                  "foreach": "@items('For_each_order')?['items']",
+                  "actions": {
+                    "vc-odt-export-orderproducts-dynamics": {
+                      "type": "Workflow",
+                      "inputs": {
+                        "host": {
+                          "triggerName": "request",
+                          "workflow": {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedExportOrderproductsLogicAppName'))]"
+                          }
+                        },
+                        "body": {
+                          "currency": "@{items('For_each_order_product')?['currency']}",
+                          "price": "@items('For_each_order_product')?['price']",
+                          "productName": "@{items('For_each_order_product')?['name']}",
+                          "quantity": "@items('For_each_order_product')?['quantity']",
+                          "salesOrderId": "@{body('vc-odt-export-order-dynamics')?['salesOrderId']}",
+                          "salesOrderNumber": "@{items('For_each_order')?['number']}",
+                          "sku": "@{items('For_each_order_product')?['sku']}"
+                        }
+                      },
+                      "runAfter": {}
+                    }
+                  },
+                  "runAfter": {
+                    "vc-odt-export-order-dynamics": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "vc-odt-export-order-dynamics": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "triggerName": "request",
+                      "workflow": {
+                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedExportOrderLogicAppName'))]"
+                      }
+                    },
+                    "body": {
+                      "_customerid_value": "@{body('vc-odt-export-customer-dynamics')?['accountid']}",
+                      "currency": "@{items('For_each_order')?['currency']}",
+                      "number": "@{items('For_each_order')?['number']}",
+                      "totalamount": "@items('For_each_order')?['total']"
+                    }
+                  },
+                  "runAfter": {
+                    "vc-odt-export-customer-dynamics": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "vc-odt-export-customer-dynamics": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "triggerName": "request",
+                      "workflow": {
+                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedExportCustomerLogicAppName'))]"
+                      }
+                    },
+                    "body": {
+                      "connection": {
+                        "accessToken": "@body('Parse_token_JSON')?['access_token']",
+                        "endpointUrl": "@parameters('endpointUrl')"
+                      },
+                      "customerId": "@{items('For_each_order')?['customerId']}"
+                    }
+                  },
+                  "runAfter": {}
                 }
               },
               "runAfter": {

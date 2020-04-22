@@ -52,8 +52,8 @@
       }
     },
     "organizationNameParam": {
-      "type": "string",
-      "defaultValue": "org363c224b.crm"
+        "type": "string",
+        "defaultValue": "org363c224b.crm"
     },
     "dynamicscrmonline_1_Connection_Name": {
       "type": "string",
@@ -87,41 +87,15 @@
             "Response": {
               "type": "Response",
               "inputs": {
-                "statusCode": 200,
-                "headers": {
-                  "Content-Type": "application/json"
-                },
-                "body": {
-                  "accountid": "@variables('accountId')"
-                }
+                "statusCode": 200
               },
               "runAfter": {
-                "Condition": [
+                "Create_a_new_orderproduct": [
                   "Succeeded"
                 ]
               }
             },
-            "HTTP_Get_member": {
-              "type": "Http",
-              "inputs": {
-                "method": "get",
-                "uri": "@{concat(triggerBody()?['connection']?['endpointUrl'],'api/members/',encodeURIComponent(triggerBody()?['customerId']))}",
-                "headers": {
-                  "Authorization": "Bearer @{triggerBody()?['connection']?['accessToken']}",
-                  "Content-Type": "application/json"
-                }
-              },
-              "runAfter": {
-                "Initialize_accountId": [
-                  "Succeeded"
-                ]
-              },
-              "metadata": {
-                "apiDefinitionUrl": "@concat(triggerBody()?['connection']?['endpointUrl'],'docs/VirtoCommerce.Customer/swagger.json')",
-                "swaggerSource": "custom"
-              }
-            },
-            "List_accounts": {
+            "Get_currency": {
               "type": "ApiConnection",
               "inputs": {
                 "host": {
@@ -130,90 +104,47 @@
                   }
                 },
                 "method": "get",
-                "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('accounts'))}/items",
+                "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('transactioncurrencies'))}/items",
                 "queries": {
-                  "$filter": "name eq '@{body('HTTP_Get_member')?['name']}'"
+                  "$filter": "isocurrencycode eq '@{triggerBody()?['currency']}'"
                 }
-              },
-              "runAfter": {
-                "HTTP_Get_member": [
-                  "Succeeded"
-                ]
-              }
-            },
-            "Condition": {
-              "type": "If",
-              "expression": {
-                "and": [
-                  {
-                    "equals": [
-                      "@empty(body('List_accounts')?['value'])",
-                      "@true"
-                    ]
-                  }
-                ]
-              },
-              "actions": {
-                "Create_a_new_account": {
-                  "type": "ApiConnection",
-                  "inputs": {
-                    "host": {
-                      "connection": {
-                        "name": "@parameters('$connections')['dynamicscrmonline']['connectionId']"
-                      }
-                    },
-                    "method": "post",
-                    "body": {
-                      "name": "@body('HTTP_Get_member')?['name']",
-                      "merged": false,
-                      "emailaddress1": "@{if(empty(body('HTTP_Get_member')?['emails']),null,first(body('HTTP_Get_member')?['emails']))}"
-                    },
-                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('accounts'))}/items"
-                  },
-                  "runAfter": {}
-                },
-                "Set_new_accountId": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "accountId",
-                    "value": "@{body('Create_a_new_account')?['accountid']}"
-                  },
-                  "runAfter": {
-                    "Create_a_new_account": [
-                      "Succeeded"
-                    ]
-                  }
-                }
-              },
-              "runAfter": {
-                "List_accounts": [
-                  "Succeeded"
-                ]
-              },
-              "else": {
-                "actions": {
-                  "Set_accountId": {
-                    "type": "SetVariable",
-                    "inputs": {
-                      "name": "accountId",
-                      "value": "@{first(body('List_accounts')?['value'])?['accountid']}"
-                    },
-                    "runAfter": {}
-                  }
-                }
-              }
-            },
-            "Initialize_accountId": {
-              "type": "InitializeVariable",
-              "inputs": {
-                "variables": [
-                  {
-                    "name": "accountId",
-                    "type": "string"
-                  }
-                ]
               },
               "runAfter": {}
+            },
+            "Create_a_new_orderproduct": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['dynamicscrmonline']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "body": {
+                  "salesorderdetailname": "@triggerBody()?['salesOrderNumber']",
+                  "quantity": "@triggerBody()?['quantity']",
+                  "_shipto_freighttermscode_label": "",
+                  "_salesorderid_value": "@triggerBody()?['salesOrderId']",
+                  "priceperunit": "@triggerBody()?['price']",
+                  "ispriceoverridden": false,
+                  "_producttypecode_label": "Product",
+                  "_propertyconfigurationstatus_label": "Not Configured",
+                  "isproductoverridden": false,
+                  "willcall": false,
+                  "productdescription": "@triggerBody()?['productName']",
+                  "iscopied": false,
+                  "_transactioncurrencyid_value": "@first(body('Get_currency')?['value'])?['transactioncurrencyid']",
+                  "_pricingerrorcode_label": "None",
+                  "productname": "@triggerBody()?['productName']",
+                  "_skippricecalculation_label": "DoPriceCalcAlways"
+                },
+                "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('salesorderdetails'))}/items"
+              },
+              "runAfter": {
+                "Get_currency": [
+                  "Succeeded"
+                ]
+              }
             }
           },
           "parameters": {
@@ -222,7 +153,7 @@
               "type": "Object"
             },
             "organizationName": {
-              "type": "string"
+                "type": "string"
             }
           },
           "triggers": {
@@ -233,23 +164,29 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "connection": {
-                      "type": "object",
-                      "properties": {
-                        "accessToken": {
-                          "type": "string"
-                        },
-                        "endpointUrl": {
-                          "type": "string"
-                        }
-                      }
+                    "salesOrderId": {
+                      "type": "string"
                     },
-                    "customerId": {
+                    "salesOrderNumber": {
+                      "type": "string"
+                    },
+                    "currency": {
+                      "type": "string"
+                    },
+                    "productName": {
+                      "type": "string"
+                    },
+                    "price": {
+                      "type": "number"
+                    },
+                    "quantity": {
+                      "type": "number"
+                    },
+                    "sku": {
                       "type": "string"
                     }
                   }
-                },
-                "method": "POST"
+                }
               }
             }
           },

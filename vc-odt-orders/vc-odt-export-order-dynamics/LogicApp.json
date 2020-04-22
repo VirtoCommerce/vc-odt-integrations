@@ -51,6 +51,10 @@
         "description": "Location of the Logic App."
       }
     },
+    "organizationNameParam": {
+        "type": "string",
+        "defaultValue": "org363c224b.crm"
+    },
     "dynamicscrmonline_1_Connection_Name": {
       "type": "string",
       "defaultValue": "dynamicscrmonline-1"
@@ -103,7 +107,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('transactioncurrencies'))}/items",
+                "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('transactioncurrencies'))}/items",
                 "queries": {
                   "$filter": "isocurrencycode eq '@{triggerBody()?['currency']}'"
                 }
@@ -123,7 +127,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('salesorders'))}/items",
+                "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('salesorders'))}/items",
                 "queries": {
                   "$filter": "name eq '@{triggerBody()?['number']}'"
                 }
@@ -157,26 +161,26 @@
                     },
                     "method": "post",
                     "body": {
-                      "_transactioncurrencyid_value": "@triggerBody()?['currency']",
-                      "_customerid_value": "@triggerBody()?['_customerid_value']",
                       "_customerid_type": "accounts",
-                      "name": "@triggerBody()?['number']",
-                      "_pricelevelid_value": "null",
-                      "_ownerid_type": "",
-                      "_statuscode_label": "",
-                      "ispricelocked": false,
-                      "totalamount": "@{triggerBody()?['totalamount']}",
-                      "new_exported": false,
+                      "_customerid_value": "@triggerBody()?['_customerid_value']",
                       "_freighttermscode_label": "",
+                      "_ownerid_type": "",
                       "_paymenttermscode_label": "",
+                      "_pricelevelid_value": null,
                       "_pricingerrorcode_label": "None",
                       "_prioritycode_label": "Default Value",
-                      "willcall": false,
-                      "_shipto_freighttermscode_label": "Default Value",
                       "_shippingmethodcode_label": "",
-                      "_skippricecalculation_label": "DoPriceCalcAlways"
+                      "_shipto_freighttermscode_label": "Default Value",
+                      "_skippricecalculation_label": "DoPriceCalcAlways",
+                      "_statuscode_label": "",
+                      "_transactioncurrencyid_value": "@{first(body('Get_currency')?['value'])?['transactioncurrencyid']}",
+                      "ispricelocked": false,
+                      "name": "@triggerBody()?['number']",
+                      "new_exported": false,
+                      "totalamount": "@{float(triggerBody()?['totalamount'])}",
+                      "willcall": false
                     },
-                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('org363c224b.crm'))}/tables/@{encodeURIComponent(encodeURIComponent('salesorders'))}/items"
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('salesorders'))}/items"
                   },
                   "runAfter": {}
                 },
@@ -204,7 +208,7 @@
                     "type": "SetVariable",
                     "inputs": {
                       "name": "salesOrderId",
-                      "value": "@{first(body('List_orders')?['value'])}"
+                      "value": "@{first(body('List_orders')?['value'])?['salesorderid']}"
                     },
                     "runAfter": {}
                   }
@@ -228,6 +232,9 @@
             "$connections": {
               "defaultValue": {},
               "type": "Object"
+            },
+            "organizationName": {
+                "type": "string"
             }
           },
           "triggers": {
@@ -267,6 +274,9 @@
                 "connectionName": "[parameters('dynamicscrmonline_1_Connection_Name')]"
               }
             }
+          },
+          "organizationName": {
+            "value": "[parameters('organizationNameParam')]"
           }
         }
       },

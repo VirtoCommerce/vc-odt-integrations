@@ -6,7 +6,7 @@
       "value": "vc-odt-export-orders"
     },
     "urlParam": {
-      "value": "dev-odt-admin.azurewebsites.net/"
+      "value": "https://dev-odt-admin.azurewebsites.net/"
     }
   }
 }

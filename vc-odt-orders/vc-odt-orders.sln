@@ -19,6 +19,8 @@ Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "vc-odt-export-orders", "vc-
 EndProject
 Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "vc-odt-export-order-dynamics", "vc-odt-export-order-dynamics\vc-odt-export-order-dynamics.deployproj", "{2EECA6D6-1B65-4F11-AC4A-68550A7F798E}"
 EndProject
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "vc-odt-export-orderproducts-dynamics", "vc-odt-export-orderproducts-dynamics\vc-odt-export-orderproducts-dynamics.deployproj", "{C7BDAA2D-1951-4D54-A07D-1C84F56E4C26}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,10 @@ Global
 		{2EECA6D6-1B65-4F11-AC4A-68550A7F798E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2EECA6D6-1B65-4F11-AC4A-68550A7F798E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2EECA6D6-1B65-4F11-AC4A-68550A7F798E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7BDAA2D-1951-4D54-A07D-1C84F56E4C26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7BDAA2D-1951-4D54-A07D-1C84F56E4C26}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7BDAA2D-1951-4D54-A07D-1C84F56E4C26}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7BDAA2D-1951-4D54-A07D-1C84F56E4C26}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
