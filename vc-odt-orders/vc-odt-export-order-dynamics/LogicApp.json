@@ -176,8 +176,8 @@
                       "_transactioncurrencyid_value": "@{first(body('Get_currency')?['value'])?['transactioncurrencyid']}",
                       "ispricelocked": false,
                       "name": "@triggerBody()?['number']",
-                      "new_exported": false,
-                      "totalamount": "@{float(triggerBody()?['totalamount'])}",
+                      "new_exported": true,
+                      "totalamount": "@float(triggerBody()?['totalamount'])",
                       "willcall": false
                     },
                     "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('salesorders'))}/items"

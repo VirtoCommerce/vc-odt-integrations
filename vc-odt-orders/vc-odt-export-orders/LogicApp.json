@@ -52,16 +52,16 @@
       }
     },
     "nestedExportCustomerLogicAppName": {
-        "type": "string",
-        "defaultValue": "vc-odt-export-customer-dynamics"
+      "type": "string",
+      "defaultValue": "vc-odt-export-customer-dynamics"
     },
     "nestedExportOrderLogicAppName": {
-        "type": "string",
-        "defaultValue": "vc-odt-export-order-dynamics"
+      "type": "string",
+      "defaultValue": "vc-odt-export-order-dynamics"
     },
     "nestedExportOrderProductsLogicAppName": {
-        "type": "string",
-        "defaultValue": "vc-odt-export-orderproducts-dynamics"
+      "type": "string",
+      "defaultValue": "vc-odt-export-orderproducts-dynamics"
     },
     "passwordParam": {
       "type": "securestring"
@@ -103,7 +103,7 @@
               "inputs": {
                 "method": "post",
                 "body": {
-                  "status": "New"
+                  "status": "Ready to export"
                 },
                 "headers": {
                   "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']}",
@@ -271,7 +271,8 @@
                         "accessToken": "@body('Parse_token_JSON')?['access_token']",
                         "endpointUrl": "@parameters('endpointUrl')"
                       },
-                      "customerId": "@{items('For_each_order')?['customerId']}"
+                      "customerId": "@{items('For_each_order')?['customerId']}",
+                      "customerName": "@{items('For_each_order')?['customerName']}"
                     }
                   },
                   "runAfter": {}

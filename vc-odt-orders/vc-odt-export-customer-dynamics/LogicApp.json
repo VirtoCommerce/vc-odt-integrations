@@ -132,7 +132,7 @@
                 "method": "get",
                 "path": "/datasets/@{encodeURIComponent(encodeURIComponent(parameters('organizationName')))}/tables/@{encodeURIComponent(encodeURIComponent('accounts'))}/items",
                 "queries": {
-                  "$filter": "name eq '@{body('HTTP_Get_member')?['name']}'"
+                  "$filter": "name eq '@{triggerBody()?['customerName']}'"
                 }
               },
               "runAfter": {
@@ -164,7 +164,7 @@
                     },
                     "method": "post",
                     "body": {
-                      "name": "@body('HTTP_Get_member')?['name']",
+                      "name": "@{triggerBody()?['customerName']}",
                       "merged": false,
                       "emailaddress1": "@{if(empty(body('HTTP_Get_member')?['emails']),null,first(body('HTTP_Get_member')?['emails']))}"
                     },
@@ -245,6 +245,9 @@
                       }
                     },
                     "customerId": {
+                      "type": "string"
+                    },
+                    "customerName": {
                       "type": "string"
                     }
                   }
