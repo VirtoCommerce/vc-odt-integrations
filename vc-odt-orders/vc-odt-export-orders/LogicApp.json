@@ -90,7 +90,8 @@
             "Response": {
               "type": "Response",
               "inputs": {
-                "statusCode": 200
+                "statusCode": 200,
+                "body": "Orders successfully exported"
               },
               "runAfter": {
                 "For_each_order": [
@@ -213,16 +214,16 @@
                         "host": {
                           "triggerName": "request",
                           "workflow": {
-                            "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedExportOrderproductsLogicAppName'))]"
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedExportOrderProductsLogicAppName'))]"
                           }
                         },
                         "body": {
-                          "currency": "@{items('For_each_order_product')?['currency']}",
-                          "price": "@items('For_each_order_product')?['price']",
-                          "productName": "@{items('For_each_order_product')?['name']}",
-                          "quantity": "@items('For_each_order_product')?['quantity']",
                           "salesOrderId": "@{body('vc-odt-export-order-dynamics')?['salesOrderId']}",
                           "salesOrderNumber": "@{items('For_each_order')?['number']}",
+                          "currency": "@{items('For_each_order_product')?['currency']}",
+                          "productName": "@{items('For_each_order_product')?['name']}",
+                          "price": "@items('For_each_order_product')?['price']",
+                          "quantity": "@items('For_each_order_product')?['quantity']",
                           "sku": "@{items('For_each_order_product')?['sku']}"
                         }
                       },
@@ -301,7 +302,8 @@
               "type": "Request",
               "kind": "Http",
               "inputs": {
-                "schema": {}
+                "schema": {},
+                "method": "GET"
               }
             }
           },
