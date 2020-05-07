@@ -1,0 +1,328 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "metadata": {
+        "description": "Name of the Logic App."
+      }
+    },
+    "logicAppLocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "allowedValues": [
+        "[resourceGroup().location]",
+        "eastasia",
+        "southeastasia",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "westeurope",
+        "japanwest",
+        "japaneast",
+        "brazilsouth",
+        "australiaeast",
+        "australiasoutheast",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "canadacentral",
+        "canadaeast",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westus2",
+        "koreacentral",
+        "koreasouth",
+        "francecentral",
+        "francesouth",
+        "uaecentral",
+        "southafricanorth",
+        "southafricawest"
+      ],
+      "metadata": {
+        "description": "Location of the Logic App."
+      }
+    },
+    "nestedExportCustomerLogicAppName": {
+      "type": "string",
+      "defaultValue": "vc-odt-export-customer-dynamics"
+    },
+    "nestedExportOrderLogicAppName": {
+      "type": "string",
+      "defaultValue": "vc-odt-export-order-dynamics"
+    },
+    "nestedExportOrderProductsLogicAppName": {
+      "type": "string",
+      "defaultValue": "vc-odt-export-orderproducts-dynamics"
+    },
+    "passwordParam": {
+      "type": "securestring"
+    },
+    "urlParam": {
+      "type": "string"
+    },
+    "usernameParam": {
+      "type": "securestring"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "name": "[parameters('logicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('logicAppLocation')]",
+      "tags": {
+        "displayName": "LogicApp"
+      },
+      "apiVersion": "2016-06-01",
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Response": {
+              "type": "Response",
+              "inputs": {
+                "statusCode": 200,
+                "body": "Orders successfully exported"
+              },
+              "runAfter": {
+                "For_each_order": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "OrderModule_Search": {
+              "type": "Http",
+              "inputs": {
+                "method": "post",
+                "body": {
+                  "status": "Ready to export"
+                },
+                "headers": {
+                  "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']}",
+                  "Content-Type": "application/json"
+                },
+                "uri": "@concat(parameters('endpointUrl'),'api/order/customerOrders/search')"
+              },
+              "runAfter": {
+                "Parse_token_JSON": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "apiDefinitionUrl": "@concat(parameters('endpointUrl'),'docs/VirtoCommerce.Orders/swagger.json')",
+                "swaggerSource": "custom"
+              }
+            },
+            "HTTP_get_token": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "@{concat(parameters('endpointUrl'),'connect/token')}",
+                "headers": {
+                  "Content-Type": "application/x-www-form-urlencoded"
+                },
+                "body": "@concat('grant_type=password&password=',encodeUriComponent(parameters('endpointPassword')),'&username=',encodeUriComponent(parameters('endpointUsername')))"
+              },
+              "runAfter": {}
+            },
+            "Parse_token_JSON": {
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('HTTP_get_token')",
+                "schema": {
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "expires_in": {
+                      "type": "integer"
+                    },
+                    "token_type": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "runAfter": {
+                "HTTP_get_token": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "For_each_order": {
+              "type": "Foreach",
+              "foreach": "@body('OrderModule_Search')?['customerOrders']",
+              "actions": {
+                "Get_full_order": {
+                  "type": "Http",
+                  "inputs": {
+                    "headers": {
+                      "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']}",
+                      "Content-Type": "application/json"
+                    },
+                    "method": "get",
+                    "uri": "@concat(parameters('endpointUrl'),'api/order/customerOrders/',encodeURIComponent(items('For_each_order')?['id']))"
+                  },
+                  "runAfter": {
+                    "For_each_order_product": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "apiDefinitionUrl": "@concat(parameters('endpointUrl'),'docs/VirtoCommerce.Orders/swagger.json')",
+                    "swaggerSource": "custom"
+                  }
+                },
+                "Update_order_status": {
+                  "inputs": {
+                    "body": "@setProperty(body('Get_full_order'),'status','Exported')",
+                    "headers": {
+                      "Authorization": "Bearer @{body('Parse_token_JSON')?['access_token']}",
+                      "Content-Type": "application/json"
+                    },
+                    "method": "put",
+                    "uri": "@concat(parameters('endpointUrl'),'api/order/customerOrders')"
+                  },
+                  "metadata": {
+                    "apiDefinitionUrl": "@concat(parameters('endpointUrl'),'docs/VirtoCommerce.Orders/swagger.json')",
+                    "swaggerSource": "custom"
+                  },
+                  "runAfter": {
+                    "Get_full_order": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Http"
+                },
+                "For_each_order_product": {
+                  "type": "Foreach",
+                  "foreach": "@items('For_each_order')?['items']",
+                  "actions": {
+                    "vc-odt-export-orderproducts-dynamics": {
+                      "type": "Workflow",
+                      "inputs": {
+                        "host": {
+                          "triggerName": "request",
+                          "workflow": {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedExportOrderProductsLogicAppName'))]"
+                          }
+                        },
+                        "body": {
+                          "salesOrderId": "@{body('vc-odt-export-order-dynamics')?['salesOrderId']}",
+                          "salesOrderNumber": "@{items('For_each_order')?['number']}",
+                          "currency": "@{items('For_each_order_product')?['currency']}",
+                          "productName": "@{items('For_each_order_product')?['name']}",
+                          "price": "@items('For_each_order_product')?['price']",
+                          "quantity": "@items('For_each_order_product')?['quantity']",
+                          "sku": "@{items('For_each_order_product')?['sku']}"
+                        }
+                      },
+                      "runAfter": {}
+                    }
+                  },
+                  "runAfter": {
+                    "vc-odt-export-order-dynamics": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "vc-odt-export-order-dynamics": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "triggerName": "request",
+                      "workflow": {
+                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedExportOrderLogicAppName'))]"
+                      }
+                    },
+                    "body": {
+                      "_customerid_value": "@{body('vc-odt-export-customer-dynamics')?['accountid']}",
+                      "currency": "@{items('For_each_order')?['currency']}",
+                      "number": "@{items('For_each_order')?['number']}",
+                      "totalamount": "@items('For_each_order')?['total']"
+                    }
+                  },
+                  "runAfter": {
+                    "vc-odt-export-customer-dynamics": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "vc-odt-export-customer-dynamics": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "triggerName": "request",
+                      "workflow": {
+                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/', parameters('nestedExportCustomerLogicAppName'))]"
+                      }
+                    },
+                    "body": {
+                      "connection": {
+                        "accessToken": "@body('Parse_token_JSON')?['access_token']",
+                        "endpointUrl": "@parameters('endpointUrl')"
+                      },
+                      "customerId": "@{items('For_each_order')?['customerId']}",
+                      "customerName": "@{items('For_each_order')?['customerName']}"
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "runAfter": {
+                "OrderModule_Search": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "parameters": {
+            "endpointPassword": {
+              "type": "securestring"
+            },
+            "endpointUrl": {
+              "type": "string"
+            },
+            "endpointUsername": {
+              "type": "securestring"
+            }
+          },
+          "triggers": {
+            "request": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {},
+                "method": "GET"
+              }
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
+        },
+        "parameters": {
+          "endpointPassword": {
+            "value": "[parameters('passwordParam')]"
+          },
+          "endpointUsername": {
+            "value": "[parameters('usernameParam')]"
+          },
+          "endpointUrl": {
+            "value": "[parameters('urlParam')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
